@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1",
+    "title": "Spring Boot 自定义配置入门",
+    "slug": "spring-boot-custom-config",
+    "summary": "在 Spring Boot 应用中使用 application.yml 组织配置，层次清晰、易维护。",
+    "content": "<p>Spring Boot 的 application.yml 允许我们以层次化的方式组织配置信息，比传统 .properties 更直观。</p><p>本文介绍常用配置项与自定义配置的绑定方式。</p>",
+    "category": "开发笔记",
+    "date": "2025-01-22",
+    "readCount": 786
+  },
+  {
+    "id": "2",
+    "title": "从零搭建 Linux 开发环境",
+    "slug": "linux-dev-environment",
+    "summary": "在 CentOS 上安装 JDK、MySQL、Redis 与 Nginx 的实践记录。",
+    "content": "<p>记录在 CentOS 上从零搭建 Java 开发与部署环境的步骤，包括 JDK、MySQL、Redis、Nginx 的安装与基本配置。</p>",
+    "category": "开发笔记",
+    "date": "2025-02-10",
+    "readCount": 512
+  },
+  {
+    "id": "3",
+    "title": "Vue 3 组合式 API 小结",
+    "slug": "vue3-composition-api",
+    "summary": "梳理 Vue 3 Composition API 的常用用法与项目中的实践。",
+    "content": "<p>ref、reactive、computed、watch 等在实际项目中的使用场景与注意点。</p>",
+    "category": "开发笔记",
+    "date": "2025-02-28",
+    "readCount": 623
+  },
+  {
+    "id": "4",
+    "title": "一名在校生的学习复盘",
+    "slug": "student-learning-retro",
+    "summary": "对过去一阶段的学习路径与项目实践做一次小结。",
+    "content": "<p>从课堂到课外的技术学习路径，以及如何把零散知识整理成可复用的笔记与项目。</p>",
+    "category": "生活随笔",
+    "date": "2025-03-01",
+    "readCount": 389
+  },
+  {
+    "id": "5",
+    "title": "Docker 入门与常用命令",
+    "slug": "docker-basics",
+    "summary": "Docker 镜像、容器与 docker-compose 的入门笔记。",
+    "content": "<p>镜像拉取、容器运行、端口映射与 docker-compose 编排的常用命令与示例。</p>",
+    "category": "开发笔记",
+    "date": "2025-03-08",
+    "readCount": 445
+  },
+  {
+    "id": "6",
+    "title": "个人博客站点搭建记录",
+    "slug": "personal-blog-setup",
+    "summary": "使用 React + Vite + Tailwind 搭建个人博客前端的记录与设计思路。",
+    "content": "<p>技术选型、页面结构、工业风格参考与后续对接后端的规划。</p>",
+    "category": "项目总结",
+    "date": "2025-03-15",
+    "readCount": 0
+  }
+]

@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 工业美学风格：红黑主色、大标题、全屏区块 */
+:root {
+  --color-primary: #f6b500; /* Nanfu Gold/Yellow */
+  --color-primary-dark: #d49c00;
+  --color-black: #000000;
+  --color-dark: #111111;
+  --color-surface: #1a1a1a;
+  --color-muted: #a1a1a1;
+  --color-text: #ffffff;
+  --color-border: #333333;
+  --color-white: #ffffff;
+  --color-accent-red: #e60012; /* Nanfu Red */
+}
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply antialiased text-[var(--color-text)] bg-[var(--color-black)];
+    font-family: 'Montserrat', 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .section-padding {
+    @apply px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-32;
+  }
+  .container-narrow {
+    @apply max-w-6xl mx-auto;
+  }
+  .container-wide {
+    @apply max-w-[1440px] mx-auto;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-10 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-xs
+           bg-[var(--color-primary)] text-black relative overflow-hidden
+           hover:bg-white transition-all duration-300 cursor-pointer shadow-[0_0_20px_rgba(246,181,0,0.3)];
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-10 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-xs
+           border-2 border-[var(--color-primary)] text-[var(--color-primary)]
+           hover:bg-[var(--color-primary)] hover:text-black
+           transition-all duration-300 cursor-pointer;
+  }
+  .btn-dark {
+    @apply inline-flex items-center justify-center px-10 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-xs
+           bg-transparent text-white border border-white/20
+           hover:bg-white hover:text-black
+           transition-all duration-300 cursor-pointer;
+  }
+  
+  /* 能量条动效 */
+  .energy-bar {
+    @apply h-1 bg-gray-800 rounded-full overflow-hidden relative;
+  }
+  .energy-fill {
+    @apply absolute top-0 left-0 h-full bg-[var(--color-primary)] shadow-[0_0_10px_var(--color-primary)];
+  }
+
+  /* 工业级动效 */
+  .glow-on-hover {
+    @apply relative overflow-hidden;
+  }
+  .glow-on-hover::after {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500 pointer-events-none;
+    background: radial-gradient(circle at center, var(--color-primary) 0%, transparent 70%);
+  }
+  .glow-on-hover:hover::after {
+    @apply opacity-20;
+  }
+
+  @keyframes spin-slow {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 20s linear infinite;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  .gradient-mask {
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  }
+
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 300px);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1024px) {
+    .bento-grid {
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(4, 300px);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .bento-grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto;
+    }
+  }
+
+  .marquee-content {
+    display: flex;
+    width: fit-content;
+    animation: marquee 30s linear infinite;
+  }
+
+  .marquee-content-reverse {
+    display: flex;
+    width: fit-content;
+    animation: marquee-reverse 30s linear infinite;
+  }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @keyframes marquee-reverse {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
+  }
+
+  .faq-accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0, 1, 0, 1);
+  }
+
+  .faq-accordion-item.active .faq-accordion-content {
+    max-height: 1000px;
+    transition: max-height 1s ease-in-out;
+  }
+
+  a:focus-visible,
+  button:focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-[var(--color-primary)];
+  }
+
+  .article-content p {
+    @apply mt-4 text-[var(--color-text)] leading-relaxed;
+  }
+  .article-content p:first-child {
+    @apply mt-0;
+  }
+  .article-content a {
+    @apply text-[var(--color-primary)] underline hover:no-underline;
+  }
+  .article-content h2 {
+    @apply font-display font-bold text-xl mt-8 mb-2 text-[var(--color-text)];
+  }
+  .article-content h3 {
+    @apply font-display font-semibold text-lg mt-6 mb-2 text-[var(--color-text)];
+  }
+  .article-content ul {
+    @apply list-disc pl-6 mt-2 space-y-1 text-[var(--color-muted)];
+  }
+}
