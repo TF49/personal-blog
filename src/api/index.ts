@@ -5,6 +5,7 @@ import { highlights } from '@/data/highlights'
 import { timelineEvents } from '@/data/timeline'
 import { stats } from '@/data/stats'
 import articlesData from '@/data/articles.json'
+export { getFeaturedRepos, getRepoOgImageUrl } from '@/api/github'
 
 const articles = articlesData as Article[]
 

@@ -49,3 +49,21 @@ export interface StatBlock {
   unit?: string
   label: string
 }
+
+export interface GitHubRepo {
+  id: number
+  name: string
+  full_name: string
+  html_url: string
+  description: string | null
+  language: string | null
+  stargazers_count: number
+  forks_count: number
+  open_issues_count: number
+  topics?: string[]
+  updated_at: string
+  pushed_at: string
+  archived: boolean
+  fork: boolean
+  homepage: string | null
+}
