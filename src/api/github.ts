@@ -23,9 +23,14 @@ export async function getPinnedRepos(
   try {
     const results = await Promise.all(
       fullNames.map(async (fullName) => {
+        const [ownerRaw, repoRaw] = fullName.split('/')
+        const owner = ownerRaw?.trim()
+        const repo = repoRaw?.trim()
+        if (!owner || !repo) return null
+
         try {
           const res = await fetch(
-            `https://api.github.com/repos/${encodeURIComponent(fullName)}`,
+            `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
             {
               headers: {
                 Accept: 'application/vnd.github+json',

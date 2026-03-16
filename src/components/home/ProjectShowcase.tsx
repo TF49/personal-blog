@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Star } from 'lucide-react'
-import { featuredRepoFullNames, getFeaturedRepos, getPinnedRepos, getRepoOgImageUrl } from '@/api'
+import { featuredRepoFullNames, getFeaturedRepos, getPinnedRepos } from '@/api'
 import type { GitHubRepo } from '@/types'
 
 export default function ProjectShowcase() {
@@ -19,6 +19,16 @@ export default function ProjectShowcase() {
       ] as const,
     [],
   )
+
+  const getBackgroundForRepo = (repo: GitHubRepo, idx: number) => {
+    const map: Record<string, string> = {
+      'TF49/BMP': fallback[0]?.image,
+      'TF49/CMS-Pro-Max': fallback[1]?.image,
+      'TF49/personal-blog': fallback[2]?.image,
+      'TF49/CatMusic': fallback[3]?.image,
+    }
+    return map[repo.full_name] ?? fallback[idx % fallback.length]?.image
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -81,7 +91,7 @@ export default function ProjectShowcase() {
                   className="group relative aspect-[16/11] overflow-hidden bg-gray-900 cursor-pointer block"
                 >
                   <img
-                    src={getRepoOgImageUrl(repo.full_name)}
+                    src={getBackgroundForRepo(repo, idx)}
                     alt={repo.name}
                     loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover opacity-60 transition-transform duration-1000 group-hover:scale-110 group-hover:opacity-40 grayscale group-hover:grayscale-0"
