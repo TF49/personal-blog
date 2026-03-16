@@ -5,6 +5,7 @@ import { getProfile, getTechStack, getTimeline } from '@/api'
 import type { AuthorProfile } from '@/types'
 import { categoryLabels } from '@/data/techStack'
 import { ArrowRight } from 'lucide-react'
+import SEO from '@/components/SEO'
 
 export default function About() {
   const [profile, setProfile] = useState<AuthorProfile | null>(null)
@@ -28,6 +29,10 @@ export default function About() {
 
   return (
     <div className="bg-white">
+      <SEO 
+        title="关于我" 
+        description={`${profile.name}的个人档案 - ${profile.title}`} 
+      />
       {/* 关于我 头部 - 工业简约风 */}
       <section className="relative pt-40 pb-24 overflow-hidden bg-[var(--color-black)] text-white">
         <div className="container-narrow relative z-10">
