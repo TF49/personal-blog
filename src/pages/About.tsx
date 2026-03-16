@@ -65,7 +65,7 @@ export default function About() {
       {/* 联系方式条 */}
       <section className="py-12 border-y border-gray-100 bg-[var(--color-surface)]">
         <div className="container-narrow">
-          <div className="flex flex-wrap justify-between items-center gap-8">
+            <div className="flex flex-wrap justify-between items-center gap-8">
             <div className="flex items-center gap-12">
               <div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">微信</div>
@@ -77,17 +77,19 @@ export default function About() {
               </div>
             </div>
             <div className="flex gap-4">
-              {profile.social.map((s) => (
-                <a
-                  key={s.name}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 border border-gray-200 text-xs font-bold uppercase tracking-widest hover:bg-[var(--color-black)] hover:text-white transition-all duration-300"
-                >
-                  {s.name}
-                </a>
-              ))}
+              {profile.social
+                .filter((s) => s.url && s.url !== '#')
+                .map((s) => (
+                  <a
+                    key={s.name}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 border border-gray-200 text-xs font-bold uppercase tracking-widest hover:bg-[var(--color-black)] hover:text-white transition-all duration-300"
+                  >
+                    {s.name}
+                  </a>
+                ))}
             </div>
           </div>
         </div>

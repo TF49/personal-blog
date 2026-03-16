@@ -15,6 +15,40 @@ export type GetFeaturedReposOptions = {
   includeArchived?: boolean
 }
 
+export async function getPinnedRepos(
+  fullNames: string[],
+): Promise<{ repos: GitHubRepo[]; error?: string }> {
+  if (!fullNames.length) return { repos: [] }
+
+  try {
+    const results = await Promise.all(
+      fullNames.map(async (fullName) => {
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/${encodeURIComponent(fullName)}`,
+            {
+              headers: {
+                Accept: 'application/vnd.github+json',
+              },
+            },
+          )
+          if (!res.ok) {
+            return null
+          }
+          return (await res.json()) as GitHubRepo
+        } catch {
+          return null
+        }
+      }),
+    )
+
+    const repos = results.filter((r): r is GitHubRepo => r != null)
+    return { repos }
+  } catch (err) {
+    return { repos: [], error: toErrorMessage(err) }
+  }
+}
+
 export async function getFeaturedRepos(
   username: string,
   opts: GetFeaturedReposOptions = {},

@@ -4,8 +4,9 @@ import { techStackByCategory } from '@/data/techStack'
 import { highlights } from '@/data/highlights'
 import { timelineEvents } from '@/data/timeline'
 import { stats } from '@/data/stats'
+export { featuredRepoFullNames } from '@/data/featuredRepos'
 import articlesData from '@/data/articles.json'
-export { getFeaturedRepos, getRepoOgImageUrl } from '@/api/github'
+export { getFeaturedRepos, getRepoOgImageUrl, getPinnedRepos } from '@/api/github'
 
 const articles = articlesData as Article[]
 

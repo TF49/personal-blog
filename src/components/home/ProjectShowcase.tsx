@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Star } from 'lucide-react'
-import { getFeaturedRepos, getRepoOgImageUrl } from '@/api'
+import { featuredRepoFullNames, getFeaturedRepos, getPinnedRepos, getRepoOgImageUrl } from '@/api'
 import type { GitHubRepo } from '@/types'
 
 export default function ProjectShowcase() {
@@ -22,11 +22,20 @@ export default function ProjectShowcase() {
 
   useEffect(() => {
     let cancelled = false
-    getFeaturedRepos(username, { limit: 4 }).then((r) => {
+    const hasPinned = featuredRepoFullNames.length > 0
+
+    const load = async () => {
+      const result = hasPinned
+        ? await getPinnedRepos(featuredRepoFullNames)
+        : await getFeaturedRepos(username, { limit: 4 })
+
       if (cancelled) return
-      setRepos(r.repos)
-      setError(r.error)
-    })
+      setRepos(result.repos)
+      setError(result.error)
+    }
+
+    load()
+
     return () => {
       cancelled = true
     }
