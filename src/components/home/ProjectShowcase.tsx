@@ -6,7 +6,7 @@ export default function ProjectShowcase() {
   const projects = [
     { title: '电商平台', category: '全栈开发', tech: 'Spring Boot, React', image: 'https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80&w=800' },
     { title: 'AI 聊天仪表盘', category: '前端开发', tech: 'Next.js, OpenAI', image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800' },
-    { title: 'DevOps 自动化', category: '基础设施', tech: 'Docker, Jenkins', image: 'https://images.unsplash.com/photo-1605918321755-97520799ad05?auto=format&fit=crop&q=80&w=800' },
+    { title: 'DevOps 自动化', category: '基础设施', tech: 'Docker, Jenkins', image: 'https://images.unsplash.com/photo-1667372393086-9d4001d51cf1?auto=format&fit=crop&q=80&w=800' },
     { title: '移动健身应用', category: '移动端', tech: 'React Native', image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&q=80&w=800' }
   ]
 
