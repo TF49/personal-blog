@@ -1,0 +1,12 @@
+[
+  {
+    "id": "4085858491",
+    "title": "test-article3",
+    "slug": "test-article",
+    "summary": "这是一篇测试文章，用来验证博客的 GitHub issues 数据源。",
+    "content": "<p>这里写正文内容，用 Markdown 格式。</p>\n",
+    "category": "开发笔记",
+    "date": "2026-03-17",
+    "readCount": 0
+  }
+]

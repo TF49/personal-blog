@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getArticles, getRandomArticles, getCategories } from '@/api'
+import { getArticles, getRandomArticles } from '@/api'
 import { profile } from '@/data/profile'
 import type { Article } from '@/types'
 import { ArrowRight, Search, Tag, User } from 'lucide-react'
@@ -15,7 +15,8 @@ export default function Blog() {
   useEffect(() => {
     getArticles().then(setArticles)
     getRandomArticles(3).then(setRandomArticles)
-    setCategories(getCategories())
+    // categories depend on articles; derive after load to avoid sync placeholder
+    getArticles().then((all) => setCategories(Array.from(new Set(all.map((a) => a.category)))))
   }, [])
 
   const filtered = filter

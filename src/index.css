@@ -165,8 +165,12 @@
     @apply outline-none ring-2 ring-offset-2 ring-[var(--color-primary)];
   }
 
+  /* Article pages use light backgrounds; keep content readable on white */
+  .article-content {
+    @apply text-[var(--color-black)];
+  }
   .article-content p {
-    @apply mt-4 text-[var(--color-text)] leading-relaxed;
+    @apply mt-4 text-gray-700 leading-relaxed;
   }
   .article-content p:first-child {
     @apply mt-0;
@@ -175,12 +179,12 @@
     @apply text-[var(--color-primary)] underline hover:no-underline;
   }
   .article-content h2 {
-    @apply font-display font-bold text-xl mt-8 mb-2 text-[var(--color-text)];
+    @apply font-display font-bold text-xl mt-8 mb-2 text-[var(--color-black)];
   }
   .article-content h3 {
-    @apply font-display font-semibold text-lg mt-6 mb-2 text-[var(--color-text)];
+    @apply font-display font-semibold text-lg mt-6 mb-2 text-[var(--color-black)];
   }
   .article-content ul {
-    @apply list-disc pl-6 mt-2 space-y-1 text-[var(--color-muted)];
+    @apply list-disc pl-6 mt-2 space-y-1 text-gray-700;
   }
 }
