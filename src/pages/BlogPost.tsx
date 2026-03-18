@@ -16,7 +16,28 @@ export default function BlogPost() {
   const [shareBusy, setShareBusy] = useState(false)
   const toast = useToast()
 
+  const toPostPath = (s: string) => `/blog/${encodeURIComponent(s)}`
+
   const shareUrl = useMemo(() => getShareUrl(), [slug])
+
+  const safeHtml = useMemo(() => {
+    const html = post && typeof post.content === 'string' ? post.content : ''
+    return DOMPurify.sanitize(html, {
+      USE_PROFILES: { html: true },
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/)/i,
+    })
+  }, [post && typeof post.content === 'string' ? post.content : ''])
+
+  const jsonLd = useMemo(() => {
+    if (!post) return undefined
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: post.title,
+      datePublished: post.date,
+      dateModified: post.date,
+    }
+  }, [post])
 
   useEffect(() => {
     if (!slug) return
@@ -56,21 +77,6 @@ export default function BlogPost() {
       </div>
     )
   }
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title,
-    datePublished: post.date,
-    dateModified: post.date,
-  }
-
-  const safeHtml = useMemo(() => {
-    return DOMPurify.sanitize(post.content, {
-      USE_PROFILES: { html: true },
-      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/)/i,
-    })
-  }, [post.content])
 
   return (
     <div className="bg-white min-h-screen pt-24">
@@ -157,7 +163,7 @@ export default function BlogPost() {
                 {related.map((a) => (
                   <Link
                     key={a.id}
-                    to={`/blog/${a.slug}`}
+                    to={toPostPath(a.slug)}
                     className="group block p-8 bg-[var(--color-surface)] border border-gray-100 hover:border-[var(--color-primary)] transition-all duration-500"
                   >
                     <div className="text-[var(--color-primary)] font-display text-[10px] tracking-widest mb-4 uppercase">

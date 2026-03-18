@@ -14,6 +14,8 @@ export default function Blog() {
   const [filter, setFilter] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
+  const toPostPath = (slug: string) => `/blog/${encodeURIComponent(slug)}`
+
   useEffect(() => {
     let cancelled = false
     const load = async () => {
@@ -130,7 +132,7 @@ export default function Blog() {
                 transition={{ delay: idx * 0.1 }}
               >
                 <Link
-                  to={`/blog/${a.slug}`}
+                  to={toPostPath(a.slug)}
                   className="group block"
                 >
                   <div className="flex flex-col md:flex-row gap-10 items-start">
@@ -186,7 +188,7 @@ export default function Blog() {
               </div>
               <div className="space-y-8">
                 {recommendedArticles.map((a) => (
-                  <Link key={a.id} to={`/blog/${a.slug}`} className="group block">
+                  <Link key={a.id} to={toPostPath(a.slug)} className="group block">
                     <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 group-hover:text-[var(--color-primary)] transition-colors">
                       {a.category}
                     </div>
