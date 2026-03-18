@@ -55,7 +55,18 @@ async function ghFetchJson(url, { token } = {}) {
   }
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(url, { headers })
+  let res
+  try {
+    res = await fetch(url, { headers })
+  } catch (err) {
+    const cause = err && typeof err === 'object' && 'cause' in err ? err.cause : undefined
+    const causeMsg = cause instanceof Error ? cause.message : cause ? String(cause) : ''
+    const errMsg = err instanceof Error ? err.message : String(err)
+    throw new Error(
+      `Network error when fetching GitHub API: ${url}\n` +
+        `Error: ${errMsg}${causeMsg ? `\nCause: ${causeMsg}` : ''}`,
+    )
+  }
   if (!res.ok) {
     let detail = ''
     try {
