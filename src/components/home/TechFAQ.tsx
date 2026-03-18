@@ -4,9 +4,9 @@ import { ArrowRight } from 'lucide-react'
 export default function TechFAQ() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const faqs = [
-    { q: "你的主要开发技术栈是什么？", a: "我专注于“强力技术栈”：使用 Spring Boot 构建稳健的后端，使用 React/Next.js 打造高性能的前端界面。" },
-    { q: "你如何确保应用的性能？", a: "通过严格的优化、缓存策略和受高端制造业启发的工业级工程实践来确保卓越性能。" },
-    { q: "你接受全球范围的合作吗？", a: "当然。我具备全球化协作能力，能够跨越不同时区 and 文化与技术领域进行连接。" }
+    { q: "这个博客的文章从哪里来？", a: "文章通过 GitHub Issues 发布（带 blog 标签），构建时生成 articles.json，前端静态加载展示。" },
+    { q: "你目前主要在学什么方向？", a: "以 Java 后端（Spring Boot）为主，同时学习前端（React/Vue）与 Linux/Docker 部署，把课程项目与实践整理成笔记。" },
+    { q: "如何联系你或交流技术？", a: "可以在“关于我”页面找到微信与邮箱；如果你对某篇文章有建议，也欢迎在对应的 GitHub Issue 下评论。" }
   ]
 
   return (

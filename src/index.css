@@ -149,6 +149,15 @@
     to { transform: translateX(0); }
   }
 
+  @keyframes toast-enter {
+    from { transform: translateY(-6px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .toast-enter {
+    animation: toast-enter 160ms ease-out both;
+  }
+
   .faq-accordion-content {
     max-height: 0;
     overflow: hidden;

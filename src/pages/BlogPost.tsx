@@ -1,14 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { getArticleBySlug, getArticles } from '@/api'
 import type { Article } from '@/types'
 import { ArrowLeft, Clock, Eye, Share2, Bookmark } from 'lucide-react'
+import { getShareUrl, shareOrCopy } from '@/utils/share'
+import { useToast } from '@/components/toast/ToastProvider'
+import SEO from '@/components/SEO'
+import DOMPurify from 'dompurify'
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
   const [post, setPost] = useState<Article | null | undefined>(undefined)
   const [related, setRelated] = useState<Article[]>([])
+  const [shareBusy, setShareBusy] = useState(false)
+  const toast = useToast()
+
+  const shareUrl = useMemo(() => getShareUrl(), [slug])
 
   useEffect(() => {
     if (!slug) return
@@ -22,6 +30,7 @@ export default function BlogPost() {
           setRelated(others)
         })
       }
+      document.dispatchEvent(new Event('prerender-ready'))
     })
     window.scrollTo(0, 0)
   }, [slug])
@@ -40,6 +49,7 @@ export default function BlogPost() {
   if (post === null) {
     return (
       <div className="section-padding text-center bg-white min-h-screen flex flex-col items-center justify-center">
+        <SEO title="文章不存在" description="你访问的文章不存在或已被移除。" noindex />
         <h1 className="font-display text-9xl text-gray-100 mb-8">404</h1>
         <p className="text-[var(--color-muted)] text-xl font-light mb-12">抱歉，您请求的档案不存在或已被移除。</p>
         <Link to="/blog" className="btn-primary">返回博客矩阵</Link>
@@ -47,8 +57,24 @@ export default function BlogPost() {
     )
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    datePublished: post.date,
+    dateModified: post.date,
+  }
+
+  const safeHtml = useMemo(() => {
+    return DOMPurify.sanitize(post.content, {
+      USE_PROFILES: { html: true },
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/)/i,
+    })
+  }, [post.content])
+
   return (
     <div className="bg-white min-h-screen pt-24">
+      <SEO title={post.title} description={post.summary} jsonLd={jsonLd} />
       {/* 进度条 */}
       <motion.div 
         className="fixed top-0 left-0 h-1 bg-[var(--color-primary)] z-[100] origin-left"
@@ -84,17 +110,39 @@ export default function BlogPost() {
               </div>
               <div className="flex items-center gap-2">
                 <Eye size={14} className="text-[var(--color-primary)]" />
-                <span>阅读量 {post.readCount ?? 0}</span>
+                <span>评论数 {post.readCount ?? 0}</span>
               </div>
               <div className="ml-auto flex gap-4">
-                <button className="hover:text-[var(--color-primary)] transition-colors"><Share2 size={14} /></button>
+                <button
+                  type="button"
+                  aria-label="分享"
+                  disabled={shareBusy}
+                  className={`transition-colors ${shareBusy ? 'opacity-50 cursor-not-allowed' : 'hover:text-[var(--color-primary)]'}`}
+                  onClick={async () => {
+                    if (shareBusy) return
+                    setShareBusy(true)
+                    try {
+                      const res = await shareOrCopy({
+                        title: post.title,
+                        url: shareUrl,
+                      })
+                      if (res.kind === 'copied') toast.success('已复制文章链接')
+                    } catch {
+                      toast.error('分享失败，请重试')
+                    } finally {
+                      window.setTimeout(() => setShareBusy(false), 800)
+                    }
+                  }}
+                >
+                  <Share2 size={14} />
+                </button>
               </div>
             </div>
           </header>
 
           <div
             className="article-content prose prose-lg max-w-none prose-headings:font-display prose-headings:tracking-tighter prose-p:text-gray-600 prose-p:leading-loose prose-a:text-[var(--color-primary)] prose-img:border prose-img:border-gray-100"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
 
           {/* 相关推荐 - 工业风卡片 */}

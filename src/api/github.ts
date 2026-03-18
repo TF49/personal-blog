@@ -9,6 +9,36 @@ function toErrorMessage(err: unknown): string {
   }
 }
 
+function isPrerendering() {
+  try {
+    const w = window as unknown as { __PRERENDER_INJECTED?: { prerender?: boolean } }
+    return Boolean(w?.__PRERENDER_INJECTED?.prerender)
+  } catch {
+    return false
+  }
+}
+
+async function fetchJson<T>(url: string, init: RequestInit = {}, timeoutMs = 6500): Promise<T> {
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal })
+    if (!res.ok) {
+      let detail = ''
+      try {
+        const body = (await res.json()) as { message?: string }
+        detail = body?.message ? ` (${body.message})` : ''
+      } catch {
+        // ignore
+      }
+      throw new Error(`GitHub API 请求失败：${res.status}${detail}`)
+    }
+    return (await res.json()) as T
+  } finally {
+    window.clearTimeout(timer)
+  }
+}
+
 export type GetFeaturedReposOptions = {
   limit?: number
   includeForks?: boolean
@@ -19,6 +49,9 @@ export async function getPinnedRepos(
   fullNames: string[],
 ): Promise<{ repos: GitHubRepo[]; error?: string }> {
   if (!fullNames.length) return { repos: [] }
+  if (isPrerendering()) {
+    return { repos: [], error: 'prerender: skip GitHub request' }
+  }
 
   try {
     const results = await Promise.all(
@@ -29,18 +62,10 @@ export async function getPinnedRepos(
         if (!owner || !repo) return null
 
         try {
-          const res = await fetch(
+          return await fetchJson<GitHubRepo>(
             `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
-            {
-              headers: {
-                Accept: 'application/vnd.github+json',
-              },
-            },
+            { headers: { Accept: 'application/vnd.github+json' } },
           )
-          if (!res.ok) {
-            return null
-          }
-          return (await res.json()) as GitHubRepo
         } catch {
           return null
         }
@@ -62,28 +87,15 @@ export async function getFeaturedRepos(
   const includeForks = opts.includeForks ?? false
   const includeArchived = opts.includeArchived ?? false
 
+  if (isPrerendering()) {
+    return { repos: [], error: 'prerender: skip GitHub request' }
+  }
+
   try {
-    const res = await fetch(
+    const data = await fetchJson<GitHubRepo[]>(
       `https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`,
-      {
-        headers: {
-          Accept: 'application/vnd.github+json',
-        },
-      },
+      { headers: { Accept: 'application/vnd.github+json' } },
     )
-
-    if (!res.ok) {
-      let detail = ''
-      try {
-        const body = (await res.json()) as { message?: string }
-        detail = body?.message ? ` (${body.message})` : ''
-      } catch {
-        // ignore
-      }
-      return { repos: [], error: `GitHub API 请求失败：${res.status}${detail}` }
-    }
-
-    const data = (await res.json()) as GitHubRepo[]
     const filtered = data.filter((r) => {
       if (!includeForks && r.fork) return false
       if (!includeArchived && r.archived) return false

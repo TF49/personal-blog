@@ -1,30 +1,52 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getArticles, getRandomArticles } from '@/api'
+import { getArticles, getRecommendedArticles } from '@/api'
 import { profile } from '@/data/profile'
 import type { Article } from '@/types'
 import { ArrowRight, Search, Tag, User } from 'lucide-react'
+import SEO from '@/components/SEO'
 
 export default function Blog() {
   const [articles, setArticles] = useState<Article[]>([])
-  const [randomArticles, setRandomArticles] = useState<Article[]>([])
+  const [recommendedArticles, setRecommendedArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [filter, setFilter] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
-    getArticles().then(setArticles)
-    getRandomArticles(3).then(setRandomArticles)
-    // categories depend on articles; derive after load to avoid sync placeholder
-    getArticles().then((all) => setCategories(Array.from(new Set(all.map((a) => a.category)))))
+    let cancelled = false
+    const load = async () => {
+      const all = await getArticles()
+      if (cancelled) return
+      setArticles(all)
+      setCategories(Array.from(new Set(all.map((a) => a.category))))
+      document.dispatchEvent(new Event('prerender-ready'))
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const filtered = filter
-    ? articles.filter((a) => a.category === filter)
-    : articles
+  useEffect(() => {
+    getRecommendedArticles({ currentCategory: filter ?? undefined, limit: 3 }).then(setRecommendedArticles)
+  }, [filter])
+
+  const q = query.trim().toLowerCase()
+  const filtered = articles.filter((a) => {
+    if (filter && a.category !== filter) return false
+    if (!q) return true
+    const haystack = `${a.title} ${a.summary}`.toLowerCase()
+    return haystack.includes(q)
+  })
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO
+        title="博客"
+        description="博客文章列表：开发笔记、项目总结与随笔。"
+      />
       {/* 博客头部 - 工业极简风 */}
       <section className="pt-40 pb-20 bg-[var(--color-black)] text-white overflow-hidden relative">
         <div className="container-narrow relative z-10">
@@ -78,7 +100,13 @@ export default function Blog() {
           </div>
           <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-[var(--color-surface)] border border-gray-100">
             <Search size={14} className="text-gray-400" />
-            <input type="text" placeholder="搜索文章..." className="bg-transparent border-none outline-none text-xs text-[var(--color-black)] w-40" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索文章..."
+              className="bg-transparent border-none outline-none text-xs text-[var(--color-black)] w-40"
+            />
           </div>
         </div>
       </section>
@@ -87,7 +115,13 @@ export default function Blog() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-20">
           {/* 主列表区 */}
           <div className="lg:col-span-8 space-y-12">
-            {filtered.map((a, idx) => (
+            {filtered.length === 0 ? (
+              <div className="py-24 text-center text-[var(--color-muted)]">
+                <div className="font-display text-xs uppercase tracking-widest">没有匹配的文章</div>
+                <div className="mt-3 text-sm font-light">试试更换分类或搜索关键词</div>
+              </div>
+            ) : (
+              filtered.map((a, idx) => (
               <motion.div
                 key={a.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -117,7 +151,7 @@ export default function Blog() {
                         {a.summary}
                       </p>
                       <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                        <span>阅读量 {a.readCount ?? 0}</span>
+                        <span>评论数 {a.readCount ?? 0}</span>
                         <span className="w-1 h-1 bg-gray-200 rounded-full" />
                         <span className="group-hover:text-[var(--color-primary)] transition-colors flex items-center gap-2">
                           阅读全文 <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
@@ -127,7 +161,8 @@ export default function Blog() {
                   </div>
                 </Link>
               </motion.div>
-            ))}
+            ))
+            )}
           </div>
 
           {/* 侧边栏 - 工业风组件 */}
@@ -150,7 +185,7 @@ export default function Blog() {
                 <h3 className="font-display text-xs uppercase tracking-[0.3em] text-[var(--color-black)]">推荐阅读</h3>
               </div>
               <div className="space-y-8">
-                {randomArticles.map((a) => (
+                {recommendedArticles.map((a) => (
                   <Link key={a.id} to={`/blog/${a.slug}`} className="group block">
                     <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 group-hover:text-[var(--color-primary)] transition-colors">
                       {a.category}

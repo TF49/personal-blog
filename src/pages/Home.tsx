@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { getStats, getHighlights, getTimeline, getRecentArticles } from '@/api'
+import { getStats, getHighlights, getTimeline, getRecentArticles, getHomeSnapshot } from '@/api'
 import type { StatBlock, HighlightCard, TimelineEvent, Article } from '@/types'
 import { ArrowRight } from 'lucide-react'
 
@@ -32,11 +32,14 @@ import CTA from '@/components/home/CTA'
 import CustomCursor from '@/components/CustomCursor'
 import SEO from '@/components/SEO'
 
+type HomeSnapshotState = Awaited<ReturnType<typeof getHomeSnapshot>>
+
 export default function Home() {
   const [stats, setStats] = useState<StatBlock[]>([])
   const [highlights, setHighlights] = useState<HighlightCard[]>([])
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [articles, setArticles] = useState<Article[]>([])
+  const [snapshot, setSnapshot] = useState<HomeSnapshotState | null>(null)
   
   const { scrollYProgress } = useScroll()
   const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"])
@@ -46,6 +49,12 @@ export default function Home() {
     setHighlights(getHighlights())
     setTimeline(getTimeline())
     getRecentArticles(6).then(setArticles)
+    getHomeSnapshot()
+      .then(setSnapshot)
+      .catch(() => setSnapshot(null))
+      .finally(() => {
+        document.dispatchEvent(new Event('prerender-ready'))
+      })
   }, [])
 
   return (
@@ -70,11 +79,11 @@ export default function Home() {
       <TechBentoGrid />
       <SkillMastery />
       <TechRadar />
-      <PerformanceDashboard />
-      <IndustryNews />
+      <PerformanceDashboard metrics={snapshot?.metrics} />
+      <IndustryNews articles={snapshot?.recentArticles} />
       <ExplodedTechView />
-      <TechnicalWhitepaper />
-      <InteractiveLab />
+      <TechnicalWhitepaper articles={snapshot?.featuredArticles} />
+      <InteractiveLab repos={snapshot?.pinnedRepos} githubError={snapshot?.githubError} />
       <DevWorkflow />
       <MilestoneProgress />
       <PowerRing />
@@ -103,7 +112,7 @@ export default function Home() {
                 <span className="text-[var(--color-primary)]">历程</span>
               </h2>
               <p className="mt-8 text-[var(--color-muted)] text-sm leading-relaxed">
-                一段从学术学习到实际工程卓越的旅程。
+                从课堂作业到可在线访问的实际项目，每一步都在缩短「会写代码」与「能交付产品」之间的距离。
               </p>
             </div>
             <div className="md:w-2/3 border-l border-gray-100 pl-12 space-y-16">

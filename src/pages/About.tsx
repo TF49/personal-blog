@@ -13,7 +13,20 @@ export default function About() {
   const [timeline] = useState(() => getTimeline())
 
   useEffect(() => {
-    getProfile().then(setProfile)
+    let cancelled = false
+    const load = async () => {
+      try {
+        const p = await getProfile()
+        if (cancelled) return
+        setProfile(p)
+      } finally {
+        document.dispatchEvent(new Event('prerender-ready'))
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   if (!profile) {
@@ -133,7 +146,7 @@ export default function About() {
         <div className="container-narrow">
           <div className="mb-32 text-center">
             <h2 className="font-display text-4xl sm:text-6xl mb-6">进取 <span className="text-[var(--color-primary)]">历程</span></h2>
-            <p className="text-white/40 text-xs uppercase tracking-[0.5em]">从学术基石到工程卓越</p>
+            <p className="text-white/40 text-xs uppercase tracking-[0.5em]">把每一次练习都变成可复用的经验</p>
           </div>
           <div className="max-w-4xl mx-auto relative">
             <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-white/10 -translate-x-1/2" />

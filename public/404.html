@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting…</title>
+    <meta name="robots" content="noindex" />
+    <script>
+      ;(function () {
+        // GitHub Pages doesn't support SPA rewrites. This 404 page captures the
+        // original path and redirects to the app entry so BrowserRouter works.
+        const path = window.location.pathname
+        const search = window.location.search
+        const hash = window.location.hash
+        const base = path.replace(/\/404\.html$/, '/')
+        const redirectUrl =
+          base +
+          '?p=' +
+          encodeURIComponent(path + search) +
+          (hash ? hash : '')
+        window.location.replace(redirectUrl)
+      })()
+    </script>
+  </head>
+  <body></body>
+</html>

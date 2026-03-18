@@ -1,18 +1,28 @@
 import { motion } from 'framer-motion'
 
-export default function PerformanceDashboard() {
-  const metrics = [
-    { label: '系统在线率', value: '99.9', unit: '%' },
-    { label: '响应时间', value: '42', unit: 'ms' },
-    { label: '安全等级', value: 'A+', unit: '' },
-    { label: '负载能力', value: '10k', unit: 'qps' }
+type Metric = {
+  label: string
+  value: string
+  unit?: string
+}
+
+type PerformanceDashboardProps = {
+  metrics?: Metric[]
+}
+
+export default function PerformanceDashboard({ metrics }: PerformanceDashboardProps) {
+  const items = metrics ?? [
+    { label: '文章总数', value: '--' },
+    { label: '分类数量', value: '--' },
+    { label: '近 30 天更新', value: '--' },
+    { label: 'GitHub Stars', value: '--' },
   ]
 
   return (
     <section className="py-32 bg-white border-y border-gray-100">
       <div className="container-wide px-6 lg:px-12">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-20">
-          {metrics.map((m, idx) => (
+          {items.map((m, idx) => (
             <motion.div
               key={m.label}
               initial={{ opacity: 0 }}

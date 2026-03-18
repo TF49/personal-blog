@@ -137,7 +137,7 @@ async function main() {
 
       const category = pickCategory(fm, labels)
 
-      // Temporary "readCount" stand-in: comments count
+      // "readCount" is used as comment count (Issues has no pageviews)
       const readCount = typeof it.comments === 'number' ? it.comments : 0
 
       return {

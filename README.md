@@ -53,16 +53,20 @@ npm run preview
 
 - `src/pages`：Home / Blog / BlogPost / About
 - `src/components`：Header、Footer、Layout、SectionTitle、图标等
-- `src/data`：本地数据（profile、techStack、articles、timeline、stats、highlights）
-- `src/api`：数据接口封装（当前读取本地数据，后续可替换为后端 API）
+- `src/data`：本地数据（profile、techStack、timeline、stats、highlights）
+- `src/api`：数据接口封装（文章从 `articles.json` 读取，其它为本地数据；后续可替换为后端 API）
 - `src/types`：TypeScript 类型定义
 - `public`：静态资源
 
 ## 数据与内容说明
 
-当前博客文章存放于：
+博客文章由 GitHub Issues 生成到：
 
-- `src/data/articles.json`
+- `public/articles.json`
+
+前端运行时会从站点根目录加载：
+
+- `articles.json`（发布后对应 `dist/articles.json`）
 
 文章详情页通过 `dangerouslySetInnerHTML` 渲染 `content` 字段（HTML 字符串）。
 
