@@ -35,9 +35,12 @@ export default defineConfig({
         maxConcurrentRoutes: 2,
         injectProperty: '__PRERENDER_INJECTED',
         inject: { prerender: true },
-        // Effects/data-loading in this app are client-side; give the route a moment to settle.
-        // (Using a timed render avoids prerender hangs if an event never fires.)
-        renderAfterTime: 2000,
+        // Let each page signal when its async content is ready for capture.
+        renderAfterDocumentEvent: 'prerender-ready',
+        navigationOptions: {
+          waitUntil: 'domcontentloaded',
+          timeout: 15000,
+        },
         skipThirdPartyRequests: true,
       }),
       minify: {

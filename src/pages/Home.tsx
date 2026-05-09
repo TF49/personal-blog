@@ -7,6 +7,7 @@ import { ArrowRight } from 'lucide-react'
 
 // Home Components
 import Hero from '@/components/home/Hero'
+import FloatingQuickNav from '@/components/home/FloatingQuickNav'
 import ThreeReasons from '@/components/home/ThreeReasons'
 import TechDecomposition from '@/components/home/TechDecomposition'
 import ProjectShowcase from '@/components/home/ProjectShowcase'
@@ -33,6 +34,13 @@ import CustomCursor from '@/components/CustomCursor'
 import SEO from '@/components/SEO'
 
 type HomeSnapshotState = Awaited<ReturnType<typeof getHomeSnapshot>>
+
+const quickNavItems = [
+  { id: 'hero', label: '首页主视觉', short: 'Hero' },
+  { id: 'projects', label: '项目与能力', short: 'Work' },
+  { id: 'lab', label: '实验与文章', short: 'Lab' },
+  { id: 'contact', label: '结尾与联系', short: 'CTA' },
+]
 
 export default function Home() {
   const [stats, setStats] = useState<StatBlock[]>([])
@@ -69,24 +77,31 @@ export default function Home() {
       />
 
       <CustomCursor />
+      <FloatingQuickNav items={quickNavItems} />
 
-      <Hero />
-      <ThreeReasons highlights={highlights} />
-      <TechDecomposition />
-      <ProjectShowcase />
-      <InnovationPhilosophy />
-      <TechStackMarquee />
-      <TechBentoGrid />
-      <SkillMastery />
-      <TechRadar />
-      <PerformanceDashboard metrics={snapshot?.metrics} />
-      <IndustryNews articles={snapshot?.recentArticles} />
-      <ExplodedTechView />
-      <TechnicalWhitepaper articles={snapshot?.featuredArticles} />
-      <InteractiveLab repos={snapshot?.pinnedRepos} githubError={snapshot?.githubError} />
-      <DevWorkflow />
-      <MilestoneProgress />
-      <PowerRing />
+      <div id="hero">
+        <Hero />
+      </div>
+      <div id="projects">
+        <ThreeReasons highlights={highlights} />
+        <TechDecomposition />
+        <ProjectShowcase />
+        <InnovationPhilosophy />
+        <TechStackMarquee />
+        <TechBentoGrid />
+        <SkillMastery />
+        <TechRadar />
+        <PerformanceDashboard metrics={snapshot?.metrics} />
+      </div>
+      <div id="lab">
+        <IndustryNews articles={snapshot?.recentArticles} />
+        <ExplodedTechView />
+        <TechnicalWhitepaper articles={snapshot?.featuredArticles} />
+        <InteractiveLab repos={snapshot?.pinnedRepos} githubError={snapshot?.githubError} />
+        <DevWorkflow />
+        <MilestoneProgress />
+        <PowerRing />
+      </div>
 
       <section className="py-32 bg-[var(--color-surface)]">
         <div className="container-narrow">
@@ -182,7 +197,9 @@ export default function Home() {
 
       <GlobalNetwork />
       <TechFAQ />
-      <CTA />
+      <div id="contact">
+        <CTA />
+      </div>
     </>
   )
 }

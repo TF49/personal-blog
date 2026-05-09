@@ -22,9 +22,17 @@
   html {
     scroll-behavior: smooth;
   }
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
   body {
     @apply antialiased text-[var(--color-text)] bg-[var(--color-black)];
     font-family: 'Montserrat', 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    background-image:
+      radial-gradient(circle at top left, rgba(246, 181, 0, 0.08), transparent 26%),
+      radial-gradient(circle at bottom right, rgba(230, 0, 18, 0.08), transparent 22%);
   }
 }
 
@@ -47,6 +55,9 @@
     @apply inline-flex items-center justify-center px-10 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-xs
            bg-[var(--color-primary)] text-black relative overflow-hidden
            hover:bg-white transition-all duration-300 cursor-pointer shadow-[0_0_20px_rgba(246,181,0,0.3)];
+    box-shadow:
+      0 0 24px rgba(246, 181, 0, 0.26),
+      0 12px 30px rgba(246, 181, 0, 0.12);
   }
   .btn-outline {
     @apply inline-flex items-center justify-center px-10 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-xs
@@ -59,6 +70,11 @@
            bg-transparent text-white border border-white/20
            hover:bg-white hover:text-black
            transition-all duration-300 cursor-pointer;
+  }
+
+  .panel-dark {
+    @apply border border-white/10 bg-white/[0.04] backdrop-blur-2xl;
+    box-shadow: 0 22px 80px rgba(0, 0, 0, 0.24);
   }
   
   /* 能量条动效 */

@@ -31,18 +31,21 @@ export default function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
         scrolled || !isHome 
-          ? 'bg-black/90 backdrop-blur-xl border-b border-white/10 py-3' 
-          : 'bg-transparent py-6'
+          ? 'bg-black/65 backdrop-blur-2xl border-b border-white/10 py-3' 
+          : 'bg-transparent py-5'
       }`}
     >
       <div className="container-wide px-6 lg:px-12 flex items-center justify-between">
         <Link
           to="/"
-          className={`font-display text-2xl lg:text-3xl tracking-tighter transition-all duration-500 hover:opacity-70 ${
-            scrolled || !isHome ? 'text-white' : 'text-white'
-          }`}
+          className="group flex items-center gap-3 font-display text-2xl lg:text-3xl tracking-tighter text-white transition-all duration-500 hover:opacity-80"
         >
-          NANFU <span className="text-[var(--color-primary)] font-black">BLOG</span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/5 text-xs font-black text-[var(--color-primary)] shadow-[0_0_30px_rgba(246,181,0,0.18)] transition-transform duration-500 group-hover:scale-105">
+            TF
+          </span>
+          <span>
+            NANFU <span className="text-[var(--color-primary)] font-black">BLOG</span>
+          </span>
         </Link>
 
         {/* Desktop Nav */}
@@ -68,6 +71,11 @@ export default function Header() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-10">
+          {isHome && (
+            <div className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/55 backdrop-blur-xl">
+              Signal Rich Portfolio
+            </div>
+          )}
           <div className={`flex items-center gap-6 text-[10px] font-bold tracking-[0.3em] transition-colors duration-500 ${
             scrolled || !isHome ? 'text-white/60' : 'text-white/40'
           }`}>
@@ -91,7 +99,7 @@ export default function Header() {
           </div>
           <Link 
             to="/about" 
-            className={`px-8 py-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 border rounded-full relative overflow-hidden group ${
+            className={`px-8 py-3 text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 border rounded-full relative overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.2)] ${
               scrolled || !isHome 
                 ? 'bg-[var(--color-primary)] text-black border-transparent hover:bg-white' 
                 : 'bg-white/10 text-white border-white/20 backdrop-blur-md hover:bg-white hover:text-black'
@@ -122,7 +130,7 @@ export default function Header() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 right-0 bg-black border-t border-white/10 shadow-xl lg:hidden flex flex-col p-8 gap-6"
+            className="absolute top-full left-0 right-0 bg-black/95 backdrop-blur-2xl border-t border-white/10 shadow-xl lg:hidden flex flex-col p-8 gap-6"
           >
             {navItems.map(({ to, label }) => (
               <Link
