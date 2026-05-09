@@ -18,48 +18,48 @@ var require = createRequire(import.meta.url);
 // vite-plugin-prerender's ESM build uses `require()` internally; load CJS export to avoid ESM runtime errors.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 var vitePrerender = require('vite-plugin-prerender');
+var enablePrerender = process.env.ENABLE_PRERENDER === 'true';
+var prerenderPlugin = vitePrerender({
+    staticDir: path.join(__dirname, 'dist'),
+    routes: (function () {
+        var baseRoutes = ['/', '/about', '/blog'];
+        var articlesPath = path.join(__dirname, 'public', 'articles.json');
+        try {
+            var raw = fs.readFileSync(articlesPath, 'utf8');
+            var articles = JSON.parse(raw);
+            var slugs = articles
+                .map(function (a) { return a === null || a === void 0 ? void 0 : a.slug; })
+                .filter(function (s) { return typeof s === 'string' && s.trim().length > 0; });
+            var postRoutes = slugs.map(function (s) { return "/blog/".concat(encodeURIComponent(s)); });
+            return Array.from(new Set(__spreadArray(__spreadArray([], baseRoutes, true), postRoutes, true)));
+        }
+        catch (_a) {
+            return baseRoutes;
+        }
+    })(),
+    renderer: new vitePrerender.PuppeteerRenderer({
+        maxConcurrentRoutes: 2,
+        injectProperty: '__PRERENDER_INJECTED',
+        inject: { prerender: true },
+        renderAfterDocumentEvent: 'prerender-ready',
+        navigationOptions: {
+            waitUntil: 'domcontentloaded',
+            timeout: 15000,
+        },
+        skipThirdPartyRequests: true,
+    }),
+    minify: {
+        collapseBooleanAttributes: true,
+        collapseWhitespace: true,
+        decodeEntities: true,
+        keepClosingSlash: true,
+        sortAttributes: true,
+    },
+});
 export default defineConfig({
-    plugins: [
-        react(),
-        vitePrerender({
-            staticDir: path.join(__dirname, 'dist'),
-            routes: (function () {
-                var baseRoutes = ['/', '/about', '/blog'];
-                var articlesPath = path.join(__dirname, 'public', 'articles.json');
-                try {
-                    var raw = fs.readFileSync(articlesPath, 'utf8');
-                    var articles = JSON.parse(raw);
-                    var slugs = articles
-                        .map(function (a) { return a === null || a === void 0 ? void 0 : a.slug; })
-                        .filter(function (s) { return typeof s === 'string' && s.trim().length > 0; });
-                    var postRoutes = slugs.map(function (s) { return "/blog/".concat(encodeURIComponent(s)); });
-                    return Array.from(new Set(__spreadArray(__spreadArray([], baseRoutes, true), postRoutes, true)));
-                }
-                catch (_a) {
-                    return baseRoutes;
-                }
-            })(),
-            renderer: new vitePrerender.PuppeteerRenderer({
-                maxConcurrentRoutes: 2,
-                injectProperty: '__PRERENDER_INJECTED',
-                inject: { prerender: true },
-                // Let each page signal when its async content is ready for capture.
-                renderAfterDocumentEvent: 'prerender-ready',
-                navigationOptions: {
-                    waitUntil: 'domcontentloaded',
-                    timeout: 15000,
-                },
-                skipThirdPartyRequests: true,
-            }),
-            minify: {
-                collapseBooleanAttributes: true,
-                collapseWhitespace: true,
-                decodeEntities: true,
-                keepClosingSlash: true,
-                sortAttributes: true,
-            },
-        }),
-    ],
+    plugins: __spreadArray([
+        react()
+    ], (enablePrerender ? [prerenderPlugin] : []), true),
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
