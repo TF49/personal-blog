@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Globe } from 'lucide-react'
+import { profile } from '@/data/profile'
 
 const navItems = [
   { to: '/', label: '首页' },
@@ -43,8 +44,9 @@ export default function Header() {
           <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/5 text-xs font-black text-[var(--color-primary)] shadow-[0_0_30px_rgba(246,181,0,0.18)] transition-transform duration-500 group-hover:scale-105">
             TF
           </span>
-          <span>
-            NANFU <span className="text-[var(--color-primary)] font-black">BLOG</span>
+          <span className="leading-none">
+            {profile.name}
+            <span className="ml-2 text-[var(--color-primary)] font-black">BLOG</span>
           </span>
         </Link>
 
@@ -71,11 +73,6 @@ export default function Header() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-10">
-          {isHome && (
-            <div className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/55 backdrop-blur-xl">
-              Signal Rich Portfolio
-            </div>
-          )}
           <div className={`flex items-center gap-6 text-[10px] font-bold tracking-[0.3em] transition-colors duration-500 ${
             scrolled || !isHome ? 'text-white/60' : 'text-white/40'
           }`}>

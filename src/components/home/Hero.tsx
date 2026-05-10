@@ -1,15 +1,17 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Sparkles } from 'lucide-react'
-import HeroSignalPanel from './HeroSignalPanel'
+import { ArrowRight, Github, Mail, MessageCircleMore } from 'lucide-react'
+import { profile } from '@/data/profile'
+import { highlights } from '@/data/highlights'
 
 export default function Hero() {
   const { scrollYProgress } = useScroll()
   const heroY = useTransform(scrollYProgress, [0, 0.2], [0, -50])
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0])
+  const githubLink = profile.social.find((item) => item.name === 'GitHub')?.url
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center items-center bg-[var(--color-black)] overflow-hidden px-6 pt-28 pb-20">
+    <section className="relative min-h-screen overflow-hidden bg-[var(--color-black)] px-6 pb-20 pt-32">
       <div className="absolute inset-0">
         <motion.div 
           animate={{ 
@@ -27,66 +29,85 @@ export default function Hero() {
 
       <motion.div 
         style={{ y: heroY, opacity: heroOpacity }}
-        className="relative z-10 mx-auto w-full max-w-[1320px] text-center"
+        className="relative z-10 mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-[1320px] items-center"
       >
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="grid w-full gap-16 lg:grid-cols-[minmax(0,1.15fr)_420px] lg:items-end"
         >
-          <div className="mb-10 flex justify-center">
+          <div className="text-left">
             <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.34em] text-white/70 backdrop-blur-2xl">
-              <Sparkles size={14} className="text-[var(--color-primary)]" />
-              Personal Blog / Motion System / Visual Lab
+              <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_12px_var(--color-primary)]" />
+              Personal Introduction / Full Stack / Linux Ops
+            </div>
+            <p className="mt-10 text-sm font-semibold uppercase tracking-[0.35em] text-[var(--color-primary)]">
+              你好，我是
+            </p>
+            <h1 className="mt-5 font-display text-5xl leading-none text-white sm:text-7xl lg:text-[6.5rem]">
+              {profile.name}
+            </h1>
+            <h2 className="mt-6 max-w-4xl text-2xl font-light leading-tight text-white/88 sm:text-4xl lg:text-5xl">
+              {profile.title}
+            </h2>
+            <p className="mt-8 max-w-3xl text-base leading-8 text-white/68 sm:text-lg">
+              {profile.bio}
+            </p>
+
+            <div className="mt-10 flex flex-wrap gap-4 text-sm text-white/70">
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3">
+                <MessageCircleMore size={16} className="text-[var(--color-primary)]" />
+                微信 {profile.wechat}
+              </div>
+              <a
+                href={`mailto:${profile.email}`}
+                className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 transition-colors hover:border-[var(--color-primary)]/40 hover:text-white"
+              >
+                <Mail size={16} className="text-[var(--color-primary)]" />
+                {profile.email}
+              </a>
+              {githubLink && (
+                <a
+                  href={githubLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 transition-colors hover:border-[var(--color-primary)]/40 hover:text-white"
+                >
+                  <Github size={16} className="text-[var(--color-primary)]" />
+                  GitHub / TF49
+                </a>
+              )}
+            </div>
+
+            <div className="mt-12 flex flex-wrap gap-5">
+              <Link to="/about" className="btn-primary group">
+                查看个人介绍
+                <ArrowRight className="ml-3 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link to="/blog" className="btn-dark">
+                浏览博客文章
+              </Link>
             </div>
           </div>
-          <h1 className="font-display text-7xl sm:text-9xl md:text-[12rem] lg:text-[15rem] text-white tracking-tighter leading-none mb-8">
-            No.1
-          </h1>
-          <div className="space-y-2">
-            <p className="font-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-white tracking-tight font-extralight uppercase">
-              持久充满能量的
-            </p>
-            <p className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-[var(--color-primary)] tracking-tight font-bold uppercase">
-              个人博客
-            </p>
+
+          <div className="panel-dark relative overflow-hidden rounded-[32px] p-8">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(246,181,0,0.16),transparent_32%),radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_28%)]" />
+            <div className="relative">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.38em] text-white/45">当前关注</p>
+              <div className="mt-6 space-y-4">
+                {highlights.map((item) => (
+                  <div key={item.title} className="rounded-[24px] border border-white/10 bg-black/25 p-5">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.32em] text-[var(--color-primary)]">
+                      {item.title}
+                    </div>
+                    <div className="mt-3 font-display text-2xl text-white">{item.subtitle}</div>
+                    <p className="mt-3 text-sm leading-7 text-white/65">{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <p className="mx-auto mt-8 max-w-3xl text-base leading-8 text-white/65 sm:text-lg">
-            用更强的视觉层次、动态粒子、模块化组件和可交互的内容节奏，把它从“能看”推进到“想多停留几分钟”。
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 1 }}
-          className="mt-20 flex flex-col sm:flex-row items-center justify-center gap-8"
-        >
-          <Link to="/blog" className="btn-primary group text-lg px-12 py-5">
-            探索能量中心
-            <ArrowRight className="ml-3 w-5 h-5 transition-transform group-hover:translate-x-2" />
-          </Link>
-          <Link to="/about" className="text-white/40 hover:text-white transition-colors tracking-[0.3em] text-xs font-bold uppercase py-5 px-8 border border-white/10 hover:border-white/30">
-            品牌故事
-          </Link>
-        </motion.div>
-
-        <HeroSignalPanel />
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-[-84px] left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="flex flex-col items-center gap-4"
-          >
-            <span className="text-[10px] uppercase tracking-[0.5em] text-white/20 whitespace-nowrap">向下滚动探索更多</span>
-            <div className="w-px h-12 bg-gradient-to-b from-[var(--color-primary)] to-transparent" />
-          </motion.div>
         </motion.div>
       </motion.div>
     </section>

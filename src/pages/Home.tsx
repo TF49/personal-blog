@@ -7,7 +7,6 @@ import { ArrowRight } from 'lucide-react'
 
 // Home Components
 import Hero from '@/components/home/Hero'
-import FloatingQuickNav from '@/components/home/FloatingQuickNav'
 import ThreeReasons from '@/components/home/ThreeReasons'
 import TechDecomposition from '@/components/home/TechDecomposition'
 import ProjectShowcase from '@/components/home/ProjectShowcase'
@@ -32,15 +31,9 @@ import CTA from '@/components/home/CTA'
 // Shared Components
 import CustomCursor from '@/components/CustomCursor'
 import SEO from '@/components/SEO'
+import { profile } from '@/data/profile'
 
 type HomeSnapshotState = Awaited<ReturnType<typeof getHomeSnapshot>>
-
-const quickNavItems = [
-  { id: 'hero', label: '首页主视觉', short: 'Hero' },
-  { id: 'projects', label: '项目与能力', short: 'Work' },
-  { id: 'lab', label: '实验与文章', short: 'Lab' },
-  { id: 'contact', label: '结尾与联系', short: 'CTA' },
-]
 
 export default function Home() {
   const [stats, setStats] = useState<StatBlock[]>([])
@@ -69,7 +62,7 @@ export default function Home() {
     <>
       <SEO 
         title="首页" 
-        description="持久充满能量的个人博客 - 驱动数字世界的持久动力，探索极致性能的技术边界。" 
+        description={`${profile.name}的个人博客首页，聚焦全栈开发、Linux 运维实践、项目沉淀与技术文章。`} 
       />
       <motion.div 
         className="fixed top-0 left-0 h-1 bg-[var(--color-primary)] z-[100] origin-left"
@@ -77,31 +70,24 @@ export default function Home() {
       />
 
       <CustomCursor />
-      <FloatingQuickNav items={quickNavItems} />
 
-      <div id="hero">
-        <Hero />
-      </div>
-      <div id="projects">
-        <ThreeReasons highlights={highlights} />
-        <TechDecomposition />
-        <ProjectShowcase />
-        <InnovationPhilosophy />
-        <TechStackMarquee />
-        <TechBentoGrid />
-        <SkillMastery />
-        <TechRadar />
-        <PerformanceDashboard metrics={snapshot?.metrics} />
-      </div>
-      <div id="lab">
-        <IndustryNews articles={snapshot?.recentArticles} />
-        <ExplodedTechView />
-        <TechnicalWhitepaper articles={snapshot?.featuredArticles} />
-        <InteractiveLab repos={snapshot?.pinnedRepos} githubError={snapshot?.githubError} />
-        <DevWorkflow />
-        <MilestoneProgress />
-        <PowerRing />
-      </div>
+      <Hero />
+      <ThreeReasons highlights={highlights} />
+      <TechDecomposition />
+      <ProjectShowcase />
+      <InnovationPhilosophy />
+      <TechStackMarquee />
+      <TechBentoGrid />
+      <SkillMastery />
+      <TechRadar />
+      <PerformanceDashboard metrics={snapshot?.metrics} />
+      <IndustryNews articles={snapshot?.recentArticles} />
+      <ExplodedTechView />
+      <TechnicalWhitepaper articles={snapshot?.featuredArticles} />
+      <InteractiveLab repos={snapshot?.pinnedRepos} githubError={snapshot?.githubError} />
+      <DevWorkflow />
+      <MilestoneProgress />
+      <PowerRing />
 
       <section className="py-32 bg-[var(--color-surface)]">
         <div className="container-narrow">
@@ -109,7 +95,7 @@ export default function Home() {
             {stats.map((s) => (
               <div key={s.label} className="text-center">
                 <Counter value={s.value} unit={s.unit ?? ''} />
-                <p className="mt-6 text-[var(--color-black)] font-bold text-xs uppercase tracking-[0.2em] opacity-60">
+                <p className="mt-6 text-white font-bold text-xs uppercase tracking-[0.2em] opacity-60">
                   {s.label}
                 </p>
               </div>
@@ -154,10 +140,10 @@ export default function Home() {
         <div className="container-wide px-6 lg:px-12">
           <div className="flex items-end justify-between mb-16">
             <div>
-              <h2 className="font-display text-3xl sm:text-5xl text-[var(--color-black)]">最近文章</h2>
-              <p className="mt-4 text-[var(--color-muted)] text-xs uppercase tracking-widest">技术笔记与感悟</p>
+              <h2 className="font-display text-3xl sm:text-5xl text-white">最近文章</h2>
+              <p className="mt-4 text-white/45 text-xs uppercase tracking-widest">技术笔记与感悟</p>
             </div>
-            <Link to="/blog" className="hidden sm:flex items-center text-[10px] font-bold uppercase tracking-widest text-[var(--color-black)] hover:text-[var(--color-primary)] transition-colors group">
+            <Link to="/blog" className="hidden sm:flex items-center text-[10px] font-bold uppercase tracking-widest text-white/75 hover:text-[var(--color-primary)] transition-colors group">
               查看全部 <ArrowRight className="ml-2 w-3 h-3 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
@@ -197,9 +183,7 @@ export default function Home() {
 
       <GlobalNetwork />
       <TechFAQ />
-      <div id="contact">
-        <CTA />
-      </div>
+      <CTA />
     </>
   )
 }
