@@ -38,9 +38,9 @@ export default function Hero() {
           className="grid w-full gap-16 lg:grid-cols-[minmax(0,1.15fr)_420px] lg:items-end"
         >
           <div className="text-left">
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.34em] text-white/70 backdrop-blur-2xl">
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-[10px] font-semibold tracking-[0.28em] text-white/70 backdrop-blur-2xl">
               <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_12px_var(--color-primary)]" />
-              Personal Introduction / Full Stack / Linux Ops
+              个人介绍 / 全栈开发 / Linux 运维
             </div>
             <p className="mt-10 text-sm font-semibold uppercase tracking-[0.35em] text-[var(--color-primary)]">
               你好，我是
@@ -94,7 +94,7 @@ export default function Hero() {
           <div className="panel-dark relative overflow-hidden rounded-[32px] p-8">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(246,181,0,0.16),transparent_32%),radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_28%)]" />
             <div className="relative">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.38em] text-white/45">当前关注</p>
+              <p className="text-[10px] font-semibold tracking-[0.28em] text-white/45">当前关注的方向</p>
               <div className="mt-6 space-y-4">
                 {highlights.map((item) => (
                   <div key={item.title} className="rounded-[24px] border border-white/10 bg-black/25 p-5">
