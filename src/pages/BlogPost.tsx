@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { getArticleBySlug, getArticles } from '@/api'
 import type { Article } from '@/types'
 import { ArrowLeft, Clock, Eye, Share2, Bookmark } from 'lucide-react'
@@ -8,6 +7,8 @@ import { getShareUrl, shareOrCopy } from '@/utils/share'
 import { useToast } from '@/components/toast/ToastProvider'
 import SEO from '@/components/SEO'
 import DOMPurify from 'dompurify'
+import { animateEntrance, animateScrollReveal } from '@/utils/gsapAnimations'
+import { gsap } from 'gsap'
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
@@ -15,6 +16,12 @@ export default function BlogPost() {
   const [related, setRelated] = useState<Article[]>([])
   const [shareBusy, setShareBusy] = useState(false)
   const toast = useToast()
+  
+  // Refs for GSAP animations
+  const contentRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  const articleRef = useRef<HTMLDivElement>(null)
+  const relatedRef = useRef<HTMLDivElement>(null)
 
   const toPostPath = (s: string) => `/blog/${encodeURIComponent(s)}`
 
@@ -56,6 +63,37 @@ export default function BlogPost() {
     window.scrollTo(0, 0)
   }, [slug])
 
+  // Setup animations when post is loaded
+  useEffect(() => {
+    if (!post) return
+    
+    const ctx = gsap.context(() => {
+      // Header entrance animation
+      if (headerRef.current) {
+        animateEntrance(headerRef.current, {
+          from: { opacity: 0, y: 30 },
+          delay: 0.2
+        })
+      }
+      
+      // Article content scroll animation
+      if (articleRef.current) {
+        animateScrollReveal(articleRef.current, {
+          from: { opacity: 0, y: 20 }
+        })
+      }
+      
+      // Related articles animation
+      if (relatedRef.current && related.length > 0) {
+        animateScrollReveal(relatedRef.current, {
+          from: { opacity: 0, y: 25 }
+        })
+      }
+    }, contentRef)
+    
+    return () => ctx.revert()
+  }, [post, related.length])
+
   if (!slug) return null
   if (post === undefined) {
     return (
@@ -79,22 +117,13 @@ export default function BlogPost() {
   }
 
   return (
-    <div className="bg-white min-h-screen pt-24">
+    <div ref={contentRef} className="bg-white min-h-screen pt-24">
       <SEO title={post.title} description={post.summary} jsonLd={jsonLd} />
       {/* 进度条 */}
-      <motion.div 
-        className="fixed top-0 left-0 h-1 bg-[var(--color-primary)] z-[100] origin-left"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.5 }}
-      />
+      <div className="fixed top-0 left-0 h-1 bg-[var(--color-primary)] z-[100] origin-left" />
 
       <div className="container-narrow max-w-4xl mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
+        <div ref={headerRef}>
           <Link
             to="/blog"
             className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-primary)] mb-12 hover:gap-4 transition-all"
@@ -147,13 +176,14 @@ export default function BlogPost() {
           </header>
 
           <div
+            ref={articleRef}
             className="article-content prose prose-lg max-w-none prose-headings:font-display prose-headings:tracking-tighter prose-p:text-gray-600 prose-p:leading-loose prose-a:text-[var(--color-primary)] prose-img:border prose-img:border-gray-100"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
 
           {/* 相关推荐 - 工业风卡片 */}
           {related.length > 0 && (
-            <section className="mt-32 pt-20 border-t border-gray-100">
+            <section ref={relatedRef} className="mt-32 pt-20 border-t border-gray-100">
               <div className="flex items-end justify-between mb-12">
                 <h2 className="font-display text-3xl text-[var(--color-black)] tracking-tighter">
                   相关 <span className="text-[var(--color-primary)]">推荐</span>
@@ -177,7 +207,7 @@ export default function BlogPost() {
               </div>
             </section>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   )

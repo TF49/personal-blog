@@ -1,16 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { getProfile, getTechStack, getTimeline } from '@/api'
 import type { AuthorProfile } from '@/types'
 import { categoryLabels } from '@/data/techStack'
 import { ArrowRight } from 'lucide-react'
 import SEO from '@/components/SEO'
+import { animateEntrance, animateScrollReveal, animateStagger } from '@/utils/gsapAnimations'
+import { gsap } from 'gsap'
 
 export default function About() {
   const [profile, setProfile] = useState<AuthorProfile | null>(null)
   const [techStack] = useState(() => getTechStack())
   const [timeline] = useState(() => getTimeline())
+  
+  // Refs for GSAP animations
+  const headerRef = useRef<HTMLDivElement>(null)
+  const contactRef = useRef<HTMLDivElement>(null)
+  const techStackRef = useRef<HTMLDivElement>(null)
+  const timelineRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -28,6 +35,46 @@ export default function About() {
       cancelled = true
     }
   }, [])
+
+  // Setup animations when profile is loaded
+  useEffect(() => {
+    if (!profile) return
+    
+    const ctx = gsap.context(() => {
+      // Header entrance animation
+      if (headerRef.current) {
+        animateEntrance(headerRef.current, {
+          from: { opacity: 0, y: 30 },
+          delay: 0.2
+        })
+      }
+      
+      // Contact section animation
+      if (contactRef.current) {
+        animateScrollReveal(contactRef.current, {
+          from: { opacity: 0, y: 20 }
+        })
+      }
+      
+      // Tech stack stagger animation
+      if (techStackRef.current) {
+        animateStagger(techStackRef.current, '.tech-category', {
+          from: { opacity: 0, y: 25 },
+          stagger: 0.1
+        })
+      }
+      
+      // Timeline animation
+      if (timelineRef.current) {
+        animateStagger(timelineRef.current, '.timeline-item', {
+          from: { opacity: 0, x: -30 },
+          stagger: 0.15
+        })
+      }
+    })
+    
+    return () => ctx.revert()
+  }, [profile])
 
   if (!profile) {
     return (
@@ -47,36 +94,30 @@ export default function About() {
         description={`${profile.name}的个人档案 - ${profile.title}`} 
       />
       {/* 关于我 头部 - 工业简约风 */}
-      <section className="relative pt-40 pb-24 overflow-hidden bg-[var(--color-black)] text-white">
+      <section ref={headerRef} className="relative pt-40 pb-24 overflow-hidden bg-[var(--color-black)] text-white">
         <div className="container-narrow relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 mb-8">
-              <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-widest">核心档案资料</span>
-            </div>
-            <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl mb-8 tracking-tighter">
-              {profile.name} <span className="text-[var(--color-primary)]">.</span>
-            </h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
-              <p className="text-xl sm:text-2xl text-white/80 font-light leading-relaxed">
-                {profile.title}
-              </p>
-              <p className="text-lg text-white/40 font-light leading-loose">
-                {profile.bio}
-              </p>
-            </div>
-          </motion.div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 mb-8">
+            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-widest">核心档案资料</span>
+          </div>
+          <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl mb-8 tracking-tighter">
+            {profile.name} <span className="text-[var(--color-primary)]">.</span>
+          </h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+            <p className="text-xl sm:text-2xl text-white/80 font-light leading-relaxed">
+              {profile.title}
+            </p>
+            <p className="text-lg text-white/40 font-light leading-loose">
+              {profile.bio}
+            </p>
+          </div>
         </div>
         {/* 背景装饰 */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--color-primary)]/5 to-transparent pointer-events-none" />
       </section>
 
       {/* 联系方式条 */}
-      <section className="py-12 border-y border-gray-100 bg-[var(--color-surface)]">
+      <section ref={contactRef} className="py-12 border-y border-gray-100 bg-[var(--color-surface)]">
         <div className="container-narrow">
             <div className="flex flex-wrap justify-between items-center gap-8">
             <div className="flex items-center gap-12">
@@ -109,7 +150,7 @@ export default function About() {
       </section>
 
       {/* 技术栈 - 工业网格 */}
-      <section className="section-padding bg-white">
+      <section ref={techStackRef} className="section-padding bg-white">
         <div className="container-narrow">
           <div className="mb-20">
             <h2 className="font-display text-4xl sm:text-6xl text-[var(--color-black)] mb-6">技术 <span className="text-[var(--color-primary)]">储备</span></h2>
@@ -119,7 +160,7 @@ export default function About() {
             {Object.entries(techStack).map(([cat, items]) => (
               <div
                 key={cat}
-                className="p-10 border-r border-b last:border-r-0 border-gray-100 group hover:bg-[var(--color-surface)] transition-colors duration-500"
+                className="tech-category p-10 border-r border-b last:border-r-0 border-gray-100 group hover:bg-[var(--color-surface)] transition-colors duration-500"
               >
                 <h3 className="font-display text-xs uppercase tracking-[0.3em] text-[var(--color-primary)] mb-8">
                   {categoryLabels[cat] ?? cat}
@@ -142,7 +183,7 @@ export default function About() {
       </section>
 
       {/* 成长历程 - 垂直流水线 */}
-      <section className="section-padding bg-[var(--color-black)] text-white">
+      <section ref={timelineRef} className="section-padding bg-[var(--color-black)] text-white">
         <div className="container-narrow">
           <div className="mb-32 text-center">
             <h2 className="font-display text-4xl sm:text-6xl mb-6">进取 <span className="text-[var(--color-primary)]">历程</span></h2>
@@ -151,12 +192,9 @@ export default function About() {
           <div className="max-w-4xl mx-auto relative">
             <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-white/10 -translate-x-1/2" />
             {timeline.map((e, i) => (
-              <motion.div
+              <div
                 key={e.year}
-                initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className={`relative mb-24 last:mb-0 flex flex-col md:flex-row ${i % 2 === 0 ? 'md:flex-row-reverse' : ''}`}
+                className={`timeline-item relative mb-24 last:mb-0 flex flex-col md:flex-row ${i % 2 === 0 ? 'md:flex-row-reverse' : ''}`}
               >
                 <div className="md:w-1/2 flex items-center justify-center md:px-12">
                   <div className={`w-full p-10 border border-white/5 bg-white/[0.02] backdrop-blur-sm ${i % 2 === 0 ? 'text-right' : 'text-left'}`}>
@@ -166,7 +204,7 @@ export default function About() {
                   </div>
                 </div>
                 <div className="absolute left-0 md:left-1/2 top-1/2 -translate-y-1/2 w-4 h-4 bg-[var(--color-primary)] rounded-full -translate-x-1/2 shadow-[0_0_15px_var(--color-primary)]" />
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Layout from '@/components/Layout'
+import PageTransition from '@/components/PageTransition'
 
 const Home = lazy(() => import('@/pages/Home'))
 const Blog = lazy(() => import('@/pages/Blog'))
@@ -22,12 +23,14 @@ function App() {
   return (
     <Layout>
       <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
+        <PageTransition>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/about" element={<About />} />
+          </Routes>
+        </PageTransition>
       </Suspense>
     </Layout>
   )

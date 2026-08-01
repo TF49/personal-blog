@@ -190,6 +190,27 @@
     @apply outline-none ring-2 ring-offset-2 ring-[var(--color-primary)];
   }
 
+  /* Performance optimizations for animations */
+  .gpu-accelerated {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  .animate-element {
+    will-change: transform, opacity;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
   /* Article pages use light backgrounds; keep content readable on white */
   .article-content {
     @apply text-[var(--color-black)];

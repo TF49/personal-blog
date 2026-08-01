@@ -1,17 +1,67 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Github, Mail, MessageCircleMore } from 'lucide-react'
 import { profile } from '@/data/profile'
 import { highlights } from '@/data/highlights'
+import { animateEntrance, animateTextReveal, animateScaleFade } from '@/utils/gsapAnimations'
+import { gsap } from 'gsap'
 
 export default function Hero() {
   const { scrollYProgress } = useScroll()
   const heroY = useTransform(scrollYProgress, [0, 0.2], [0, -50])
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0])
   const githubLink = profile.social.find((item) => item.name === 'GitHub')?.url
+  
+  // Refs for GSAP animations
+  const heroRef = useRef<HTMLDivElement>(null)
+  const badgeRef = useRef<HTMLDivElement>(null)
+  const greetingRef = useRef<HTMLParagraphElement>(null)
+  const nameRef = useRef<HTMLHeadingElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const bioRef = useRef<HTMLParagraphElement>(null)
+  const contactRef = useRef<HTMLDivElement>(null)
+  const buttonsRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!heroRef.current) return
+
+    // Apple-style entrance animation sequence
+    const ctx = gsap.context(() => {
+      // Badge appears first
+      animateEntrance(badgeRef.current!, { delay: 0.2 })
+      
+      // Greeting text
+      animateTextReveal(greetingRef.current!, { type: 'words', delay: 0.4 })
+      
+      // Name with dramatic reveal
+      animateTextReveal(nameRef.current!, { type: 'words', delay: 0.6, duration: 0.8 })
+      
+      // Title
+      animateTextReveal(titleRef.current!, { type: 'words', delay: 0.9 })
+      
+      // Bio
+      animateEntrance(bioRef.current!, { from: { opacity: 0, y: 20 }, delay: 1.1 })
+      
+      // Contact info
+      animateEntrance(contactRef.current!, { from: { opacity: 0, y: 15 }, delay: 1.3 })
+      
+      // Buttons
+      animateEntrance(buttonsRef.current!, { from: { opacity: 0, y: 20 }, delay: 1.5 })
+      
+      // Card with scale effect
+      animateScaleFade(cardRef.current!, { 
+        from: { opacity: 0, scale: 0.95, x: 30 },
+        delay: 1.7 
+      })
+    }, heroRef)
+
+    return () => ctx.revert()
+  }, [])
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-[var(--color-black)] px-6 pb-20 pt-32">
+    <section ref={heroRef} className="relative min-h-screen overflow-hidden bg-[var(--color-black)] px-6 pb-20 pt-32">
       <div className="absolute inset-0">
         <motion.div 
           animate={{ 
@@ -31,31 +81,26 @@ export default function Hero() {
         style={{ y: heroY, opacity: heroOpacity }}
         className="relative z-10 mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-[1320px] items-center"
       >
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="grid w-full gap-16 lg:grid-cols-[minmax(0,1.15fr)_420px] lg:items-end"
-        >
+        <div className="grid w-full gap-16 lg:grid-cols-[minmax(0,1.15fr)_420px] lg:items-end">
           <div className="text-left">
-            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-[10px] font-semibold tracking-[0.28em] text-white/70 backdrop-blur-2xl">
+            <div ref={badgeRef} className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-[10px] font-semibold tracking-[0.28em] text-white/70 backdrop-blur-2xl">
               <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_12px_var(--color-primary)]" />
               个人介绍 / 全栈开发 / Linux 运维
             </div>
-            <p className="mt-10 text-sm font-semibold uppercase tracking-[0.35em] text-[var(--color-primary)]">
+            <p ref={greetingRef} className="mt-10 text-sm font-semibold uppercase tracking-[0.35em] text-[var(--color-primary)]">
               你好，我是
             </p>
-            <h1 className="mt-5 font-display text-5xl leading-none text-white sm:text-7xl lg:text-[6.5rem]">
+            <h1 ref={nameRef} className="mt-5 font-display text-5xl leading-none text-white sm:text-7xl lg:text-[6.5rem]">
               {profile.name}
             </h1>
-            <h2 className="mt-6 max-w-4xl text-2xl font-light leading-tight text-white/88 sm:text-4xl lg:text-5xl">
+            <h2 ref={titleRef} className="mt-6 max-w-4xl text-2xl font-light leading-tight text-white/88 sm:text-4xl lg:text-5xl">
               {profile.title}
             </h2>
-            <p className="mt-8 max-w-3xl text-base leading-8 text-white/68 sm:text-lg">
+            <p ref={bioRef} className="mt-8 max-w-3xl text-base leading-8 text-white/68 sm:text-lg">
               {profile.bio}
             </p>
 
-            <div className="mt-10 flex flex-wrap gap-4 text-sm text-white/70">
+            <div ref={contactRef} className="mt-10 flex flex-wrap gap-4 text-sm text-white/70">
               <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3">
                 <MessageCircleMore size={16} className="text-[var(--color-primary)]" />
                 微信 {profile.wechat}
@@ -80,7 +125,7 @@ export default function Hero() {
               )}
             </div>
 
-            <div className="mt-12 flex flex-wrap gap-5">
+            <div ref={buttonsRef} className="mt-12 flex flex-wrap gap-5">
               <Link to="/about" className="btn-primary group">
                 查看个人介绍
                 <ArrowRight className="ml-3 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -91,7 +136,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="panel-dark relative overflow-hidden rounded-[32px] p-8">
+          <div ref={cardRef} className="panel-dark relative overflow-hidden rounded-[32px] p-8">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(246,181,0,0.16),transparent_32%),radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_28%)]" />
             <div className="relative">
               <p className="text-[10px] font-semibold tracking-[0.28em] text-white/45">当前关注的方向</p>
@@ -108,7 +153,7 @@ export default function Hero() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </motion.div>
     </section>
   )

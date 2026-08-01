@@ -1,11 +1,6 @@
 import { motion } from 'framer-motion'
 import { Zap, Shield, ZapOff, ArrowRight } from 'lucide-react'
-
-interface HighlightCard {
-  title: string
-  subtitle: string
-  description: string
-}
+import type { HighlightCard } from '@/types'
 
 export default function ThreeReasons({ highlights }: { highlights: HighlightCard[] }) {
   return (

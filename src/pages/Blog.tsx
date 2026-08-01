@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { getArticles, getRecommendedArticles } from '@/api'
 import { profile } from '@/data/profile'
 import type { Article } from '@/types'
 import { ArrowRight, Search, Tag, User } from 'lucide-react'
 import SEO from '@/components/SEO'
+import { animateScrollReveal, animateStagger } from '@/utils/gsapAnimations'
+import { gsap } from 'gsap'
 
 export default function Blog() {
   const [articles, setArticles] = useState<Article[]>([])
@@ -15,6 +16,11 @@ export default function Blog() {
   const [query, setQuery] = useState('')
 
   const toPostPath = (slug: string) => `/blog/${encodeURIComponent(slug)}`
+  
+  // Refs for GSAP animations
+  const headerRef = useRef<HTMLDivElement>(null)
+  const articlesRef = useRef<HTMLDivElement>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -43,6 +49,35 @@ export default function Blog() {
     return haystack.includes(q)
   })
 
+  // Setup scroll animations
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Header animation
+      if (headerRef.current) {
+        animateScrollReveal(headerRef.current, {
+          from: { opacity: 0, y: 30 }
+        })
+      }
+      
+      // Article cards stagger animation
+      if (articlesRef.current) {
+        animateStagger(articlesRef.current, '.blog-article-card', {
+          from: { opacity: 0, y: 25 },
+          stagger: 0.08
+        })
+      }
+      
+      // Sidebar animation
+      if (sidebarRef.current) {
+        animateScrollReveal(sidebarRef.current, {
+          from: { opacity: 0, x: -20 }
+        })
+      }
+    })
+    
+    return () => ctx.revert()
+  }, [filtered.length])
+
   return (
     <div className="bg-white min-h-screen">
       <SEO
@@ -50,24 +85,18 @@ export default function Blog() {
         description="博客文章列表：开发笔记、项目总结与随笔。"
       />
       {/* 博客头部 - 工业极简风 */}
-      <section className="pt-40 pb-20 bg-[var(--color-black)] text-white overflow-hidden relative">
+      <section ref={headerRef} className="pt-40 pb-20 bg-[var(--color-black)] text-white overflow-hidden relative">
         <div className="container-narrow relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 mb-8">
-              <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-widest">思想库与技术简报</span>
-            </div>
-            <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl mb-6 tracking-tighter">
-              内容 <span className="text-[var(--color-primary)]">发布</span>
-            </h1>
-            <p className="text-xl text-white/40 font-light max-w-2xl leading-relaxed">
-              深度解析开发笔记、生活随笔与前沿项目总结。
-            </p>
-          </motion.div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 mb-8">
+            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full" />
+            <span className="text-[10px] font-bold text-white uppercase tracking-widest">思想库与技术简报</span>
+          </div>
+          <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl mb-6 tracking-tighter">
+            内容 <span className="text-[var(--color-primary)]">发布</span>
+          </h1>
+          <p className="text-xl text-white/40 font-light max-w-2xl leading-relaxed">
+            深度解析开发笔记、生活随笔与前沿项目总结。
+          </p>
         </div>
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[var(--color-primary)]/10 to-transparent pointer-events-none" />
       </section>
@@ -116,21 +145,15 @@ export default function Blog() {
       <div className="container-narrow py-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-20">
           {/* 主列表区 */}
-          <div className="lg:col-span-8 space-y-12">
+          <div ref={articlesRef} className="lg:col-span-8 space-y-12">
             {filtered.length === 0 ? (
               <div className="py-24 text-center text-[var(--color-muted)]">
                 <div className="font-display text-xs uppercase tracking-widest">没有匹配的文章</div>
                 <div className="mt-3 text-sm font-light">试试更换分类或搜索关键词</div>
               </div>
             ) : (
-              filtered.map((a, idx) => (
-              <motion.div
-                key={a.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-              >
+              filtered.map((a) => (
+              <div key={a.id} className="blog-article-card">
                 <Link
                   to={toPostPath(a.slug)}
                   className="group block"
@@ -162,13 +185,13 @@ export default function Blog() {
                     </div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             ))
             )}
           </div>
 
           {/* 侧边栏 - 工业风组件 */}
-          <aside className="lg:col-span-4 space-y-16">
+          <aside ref={sidebarRef} className="lg:col-span-4 space-y-16">
             <div className="p-10 bg-[var(--color-surface)] border border-gray-100">
               <div className="flex items-center gap-4 mb-8">
                 <User size={20} className="text-[var(--color-primary)]" />
