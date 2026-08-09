@@ -15,7 +15,7 @@ import { ArrowRight } from 'lucide-react'
 import { animateStagger, animateCounter } from '@/utils/gsapAnimations'
 import { gsap } from 'gsap'
 
-// Critical Components - Loaded Immediately
+import { SpotlightCard, BlurText, Magnet, ScrollHighlightText } from '@/components/reactbits'
 import Hero from '@/components/home/Hero'
 import ThreeReasons from '@/components/home/ThreeReasons'
 import CustomCursor from '@/components/CustomCursor'
@@ -23,23 +23,11 @@ import SEO from '@/components/SEO'
 import { profile } from '@/data/profile'
 
 // Lazy Loaded Components - Loaded on Demand
-const TechDecomposition = lazy(() => import('@/components/home/TechDecomposition'))
 const ProjectShowcase = lazy(() => import('@/components/home/ProjectShowcase'))
-const InnovationPhilosophy = lazy(() => import('@/components/home/InnovationPhilosophy'))
-const TechStackMarquee = lazy(() => import('@/components/home/TechStackMarquee'))
 const TechBentoGrid = lazy(() => import('@/components/home/TechBentoGrid'))
-const SkillMastery = lazy(() => import('@/components/home/SkillMastery'))
-const TechRadar = lazy(() => import('@/components/home/TechRadar'))
-const PerformanceDashboard = lazy(() => import('@/components/home/PerformanceDashboard'))
-const IndustryNews = lazy(() => import('@/components/home/IndustryNews'))
-const ExplodedTechView = lazy(() => import('@/components/home/ExplodedTechView'))
-const TechnicalWhitepaper = lazy(() => import('@/components/home/TechnicalWhitepaper'))
+const TechStackMarquee = lazy(() => import('@/components/home/TechStackMarquee'))
 const InteractiveLab = lazy(() => import('@/components/home/InteractiveLab'))
-const DevWorkflow = lazy(() => import('@/components/home/DevWorkflow'))
-const MilestoneProgress = lazy(() => import('@/components/home/MilestoneProgress'))
-const GlobalNetwork = lazy(() => import('@/components/home/GlobalNetwork'))
 const TechFAQ = lazy(() => import('@/components/home/TechFAQ'))
-const PowerRing = lazy(() => import('@/components/home/PowerRing'))
 const CTA = lazy(() => import('@/components/home/CTA'))
 
 type HomeSnapshotState = Awaited<ReturnType<typeof getHomeSnapshot>>
@@ -115,7 +103,7 @@ export default function Home() {
         description={`${profile.name}的个人博客首页，聚焦全栈开发、Linux 运维实践、项目沉淀与技术文章。`} 
       />
       <motion.div 
-        className="fixed top-0 left-0 h-1 bg-[var(--color-primary)] z-[100] origin-left"
+        className="fixed top-0 left-0 h-1 bg-[var(--color-primary)] z-[100] origin-left shadow-[0_0_12px_var(--color-primary)]"
         style={{ width: progressWidth }}
       />
 
@@ -123,63 +111,59 @@ export default function Home() {
 
       <Hero />
       <ThreeReasons highlights={highlights} />
+      
       <Suspense fallback={<LazyFallback />}>
-        <TechDecomposition />
-        <ProjectShowcase />
-        <InnovationPhilosophy />
-        <TechStackMarquee />
         <TechBentoGrid />
-        <SkillMastery />
-        <TechRadar />
-        <PerformanceDashboard metrics={snapshot?.metrics} />
-        <IndustryNews articles={snapshot?.recentArticles} />
-        <ExplodedTechView />
-        <TechnicalWhitepaper articles={snapshot?.featuredArticles} />
-        <InteractiveLab repos={snapshot?.pinnedRepos} githubError={snapshot?.githubError} />
-        <DevWorkflow />
-        <MilestoneProgress />
-        <PowerRing />
+        <TechStackMarquee />
+        <ProjectShowcase />
       </Suspense>
 
-      <section ref={statsRef} className="py-32 bg-[var(--color-surface)]">
+      <section ref={statsRef} className="py-24 bg-[#0a0a0d] border-t border-white/5">
         <div className="container-narrow">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="stat-counter font-display text-5xl sm:text-6xl text-[var(--color-primary)]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {stats.map((s, idx) => (
+              <SpotlightCard
+                key={s.label}
+                spotlightColor={idx === 0 ? 'rgba(0, 113, 227, 0.25)' : idx === 1 ? 'rgba(175, 82, 222, 0.25)' : 'rgba(246, 181, 0, 0.25)'}
+                className="text-center p-8 bg-[#121216]/80 border border-white/5 rounded-2xl"
+              >
+                <div className="stat-counter font-display text-5xl sm:text-6xl text-[var(--color-primary)] drop-shadow-[0_0_15px_rgba(0,113,227,0.3)]">
                   {s.value}{s.unit ?? ''}
                 </div>
-                <p className="mt-6 text-white font-bold text-xs uppercase tracking-[0.2em] opacity-60">
+                <p className="mt-4 text-white/60 font-bold text-xs uppercase tracking-[0.2em]">
                   {s.label}
                 </p>
-              </div>
+              </SpotlightCard>
             ))}
           </div>
         </div>
       </section>
 
-      <section ref={timelineRef} className="section-padding bg-white">
+      <section ref={timelineRef} className="section-padding bg-[var(--color-black)] border-t border-white/5">
         <div className="container-narrow">
-          <div className="flex flex-col md:flex-row gap-16 lg:gap-32">
+          <div className="flex flex-col md:flex-row gap-12 lg:gap-24">
             <div className="md:w-1/3">
-              <h2 className="font-display text-4xl sm:text-5xl text-[var(--color-black)] leading-tight">
-                不断进取的 <br />
+              <h2 className="font-display text-4xl sm:text-5xl text-white leading-tight">
+                <BlurText text="不断进取的" delay={0.1} /> <br />
                 <span className="text-[var(--color-primary)]">历程</span>
               </h2>
-              <p className="mt-8 text-[var(--color-muted)] text-sm leading-relaxed">
-                从课堂作业到可在线访问的实际项目，每一步都在缩短「会写代码」与「能交付产品」之间的距离。
-              </p>
+              <ScrollHighlightText
+                text="从课堂作业到可在线访问的实际项目，每一步都在缩短「会写代码」与「能交付产品」之间的距离。"
+                className="mt-6 text-sm leading-relaxed font-light text-white/60"
+              />
             </div>
-            <div className="md:w-2/3 border-l border-gray-100 pl-12 space-y-16">
+            <div className="md:w-2/3 border-l-2 border-white/10 pl-8 md:pl-12 space-y-12 relative">
+              {/* Laser energy pulse line overlay */}
+              <div className="absolute left-[-2px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-[var(--color-primary)] via-[#af52de] to-transparent shadow-[0_0_8px_var(--color-primary)]" />
               {timeline.map((e) => (
                 <div 
                   key={e.year}
-                  className="timeline-item relative"
+                  className="timeline-item relative bg-[#121216] p-6 sm:p-8 rounded-2xl border border-white/5 hover:border-[var(--color-primary)]/30 transition-all duration-300 shadow-lg hover:-translate-y-1 group"
                 >
-                  <div className="absolute -left-[53px] top-1.5 w-2 h-2 rounded-full bg-[var(--color-primary)] shadow-[0_0_10px_var(--color-primary)]" />
-                  <span className="font-display text-2xl text-[var(--color-primary)] block mb-2">{e.year}</span>
-                  <h4 className="font-display text-xl text-[var(--color-black)] mb-4">{e.title}</h4>
-                  <p className="text-[var(--color-muted)] text-sm leading-relaxed">{e.description}</p>
+                  <div className="absolute -left-[41px] md:-left-[57px] top-8 w-3.5 h-3.5 rounded-full bg-[var(--color-primary)] shadow-[0_0_14px_var(--color-primary)] ring-4 ring-black group-hover:scale-125 transition-transform duration-300" />
+                  <span className="font-display text-xl text-[var(--color-primary)] block mb-1">{e.year}</span>
+                  <h4 className="font-display text-xl text-white mb-3">{e.title}</h4>
+                  <p className="text-white/60 text-sm leading-relaxed font-light">{e.description}</p>
                 </div>
               ))}
             </div>
@@ -187,47 +171,54 @@ export default function Home() {
         </div>
       </section>
 
-      <section ref={articlesRef} className="section-padding bg-[var(--color-surface)]">
+      <section ref={articlesRef} className="section-padding bg-[#0c0c0e] border-t border-white/5">
         <div className="container-wide px-6 lg:px-12">
           <div className="flex items-end justify-between mb-16">
             <div>
-              <h2 className="font-display text-3xl sm:text-5xl text-white">最近文章</h2>
+              <h2 className="font-display text-3xl sm:text-5xl text-white">
+                <BlurText text="最近文章" delay={0.1} />
+              </h2>
               <p className="mt-4 text-white/45 text-xs uppercase tracking-widest">技术笔记与感悟</p>
             </div>
-            <Link to="/blog" className="hidden sm:flex items-center text-[10px] font-bold uppercase tracking-widest text-white/75 hover:text-[var(--color-primary)] transition-colors group">
-              查看全部 <ArrowRight className="ml-2 w-3 h-3 transition-transform group-hover:translate-x-1" />
-            </Link>
+            <Magnet strength={0.2}>
+              <Link to="/blog" className="hidden sm:flex items-center text-[10px] font-bold uppercase tracking-widest text-white/75 hover:text-[var(--color-primary)] transition-colors group px-4 py-2 border border-white/10 rounded-full">
+                查看全部 <ArrowRight className="ml-2 w-3 h-3 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Magnet>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {articles.map((a) => (
               <div key={a.id} className="article-card">
-                <Link
-                  to={`/blog/${a.slug}`}
-                  className="block group h-full bg-white p-10 hover:shadow-2xl transition-all duration-500"
-                >
-                  <div className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest mb-6">
-                    {a.category}
-                  </div>
-                  <h3 className="font-display text-xl text-[var(--color-black)] group-hover:text-[var(--color-primary)] transition-colors duration-300 line-clamp-2 leading-snug">
-                    {a.title}
-                  </h3>
-                  <p className="mt-6 text-sm text-[var(--color-muted)] line-clamp-2 leading-loose">
-                    {a.summary}
-                  </p>
-                  <div className="mt-10 pt-6 border-t border-gray-50 flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    <span>{a.date}</span>
-                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </Link>
+                <SpotlightCard spotlightColor="rgba(0, 113, 227, 0.15)" className="p-0 h-full">
+                  <Link
+                    to={`/blog/${a.slug}`}
+                    className="block group h-full p-8 transition-all duration-500"
+                  >
+                    <div className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest mb-4">
+                      {a.category}
+                    </div>
+                    <h3 className="font-display text-xl text-white group-hover:text-[var(--color-primary)] transition-colors duration-300 line-clamp-2 leading-snug">
+                      {a.title}
+                    </h3>
+                    <p className="mt-4 text-sm text-white/60 line-clamp-2 leading-relaxed font-light">
+                      {a.summary}
+                    </p>
+                    <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-[10px] font-bold text-white/40 uppercase tracking-widest group-hover:text-white/70 transition-colors">
+                      <span>{a.date}</span>
+                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
+                    </div>
+                  </Link>
+                </SpotlightCard>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+
       <Suspense fallback={<LazyFallback />}>
-        <GlobalNetwork />
+        <InteractiveLab repos={snapshot?.pinnedRepos} githubError={snapshot?.githubError} />
         <TechFAQ />
         <CTA />
       </Suspense>

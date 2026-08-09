@@ -1,4 +1,5 @@
 import type { GitHubRepo } from '@/types'
+import { fallbackRepos } from '@/data/featuredRepos'
 
 function toErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message
@@ -18,11 +19,53 @@ function isPrerendering() {
   }
 }
 
+const CACHE_KEY = 'tf49_github_repos_cache_v1'
+const CACHE_TTL_MS = 30 * 60 * 1000 // 30 分钟缓存
+
+interface CachePayload {
+  timestamp: number
+  reposMap: Record<string, GitHubRepo>
+}
+
+function getLocalCache(): CachePayload | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as CachePayload
+  } catch {
+    return null
+  }
+}
+
+function saveToLocalCache(reposMap: Record<string, GitHubRepo>) {
+  try {
+    const existing = getLocalCache()?.reposMap || {}
+    const updatedMap = { ...existing, ...reposMap }
+    const payload: CachePayload = {
+      timestamp: Date.now(),
+      reposMap: updatedMap,
+    }
+    localStorage.setItem(CACHE_KEY, JSON.stringify(payload))
+  } catch {
+    // ignore
+  }
+}
+
 async function fetchJson<T>(url: string, init: RequestInit = {}, timeoutMs = 6500): Promise<T> {
   const controller = new AbortController()
   const timer = window.setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const res = await fetch(url, { ...init, signal: controller.signal })
+    const headers: Record<string, string> = {
+      Accept: 'application/vnd.github+json',
+      ...(init.headers as Record<string, string>),
+    }
+
+    const token = import.meta.env.VITE_GITHUB_TOKEN
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
+    const res = await fetch(url, { ...init, headers, signal: controller.signal })
     if (!res.ok) {
       let detail = ''
       try {
@@ -48,12 +91,25 @@ export type GetFeaturedReposOptions = {
 export async function getPinnedRepos(
   fullNames: string[],
 ): Promise<{ repos: GitHubRepo[]; error?: string }> {
-  if (!fullNames.length) return { repos: [] }
+  if (!fullNames.length) return { repos: fallbackRepos }
   if (isPrerendering()) {
-    return { repos: [], error: 'prerender: skip GitHub request' }
+    return { repos: fallbackRepos, error: 'prerender: skip GitHub request' }
   }
 
+  // 优先读取有效缓存
+  const cache = getLocalCache()
+  const isCacheValid = cache && Date.now() - cache.timestamp < CACHE_TTL_MS
+  if (isCacheValid && cache.reposMap) {
+    const cachedRepos = fullNames.map((fn) => cache.reposMap[fn]).filter(Boolean)
+    if (cachedRepos.length === fullNames.length) {
+      return { repos: cachedRepos }
+    }
+  }
+
+  let capturedError: string | undefined
+
   try {
+    const newFetchedMap: Record<string, GitHubRepo> = {}
     const results = await Promise.all(
       fullNames.map(async (fullName) => {
         const [ownerRaw, repoRaw] = fullName.split('/')
@@ -62,20 +118,46 @@ export async function getPinnedRepos(
         if (!owner || !repo) return null
 
         try {
-          return await fetchJson<GitHubRepo>(
+          const res = await fetchJson<GitHubRepo>(
             `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
-            { headers: { Accept: 'application/vnd.github+json' } },
           )
-        } catch {
+          if (res) {
+            newFetchedMap[fullName] = res
+          }
+          return res
+        } catch (err) {
+          if (!capturedError) {
+            capturedError = toErrorMessage(err)
+          }
           return null
         }
       }),
     )
 
-    const repos = results.filter((r): r is GitHubRepo => r != null)
-    return { repos }
+    const fetchedRepos = results.filter((r): r is GitHubRepo => r != null)
+
+    if (fetchedRepos.length > 0) {
+      saveToLocalCache(newFetchedMap)
+      return { repos: fetchedRepos, error: capturedError }
+    }
+
+    // API 失败时优先退回陈旧缓存，无缓存时退回 fallbackRepos
+    if (cache && cache.reposMap) {
+      const staleRepos = fullNames.map((fn) => cache.reposMap[fn]).filter(Boolean)
+      if (staleRepos.length > 0) {
+        return { repos: staleRepos, error: capturedError }
+      }
+    }
+
+    return { repos: fallbackRepos, error: capturedError }
   } catch (err) {
-    return { repos: [], error: toErrorMessage(err) }
+    if (cache && cache.reposMap) {
+      const staleRepos = fullNames.map((fn) => cache.reposMap[fn]).filter(Boolean)
+      if (staleRepos.length > 0) {
+        return { repos: staleRepos, error: toErrorMessage(err) }
+      }
+    }
+    return { repos: fallbackRepos, error: toErrorMessage(err) }
   }
 }
 
@@ -88,7 +170,7 @@ export async function getFeaturedRepos(
   const includeArchived = opts.includeArchived ?? false
 
   if (isPrerendering()) {
-    return { repos: [], error: 'prerender: skip GitHub request' }
+    return { repos: fallbackRepos.slice(0, limit), error: 'prerender: skip GitHub request' }
   }
 
   try {
@@ -109,7 +191,7 @@ export async function getFeaturedRepos(
 
     return { repos: sorted.slice(0, limit) }
   } catch (err) {
-    return { repos: [], error: `获取 GitHub 仓库失败：${toErrorMessage(err)}` }
+    return { repos: fallbackRepos.slice(0, limit), error: `获取 GitHub 仓库失败：${toErrorMessage(err)}` }
   }
 }
 

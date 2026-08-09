@@ -5,6 +5,7 @@ export interface AuthorProfile {
   avatar?: string
   wechat: string
   email: string
+  location?: string
   social: SocialLink[]
 }
 
@@ -42,6 +43,7 @@ export interface HighlightCard {
   subtitle: string
   description: string
   icon: string
+  value?: string
 }
 
 export interface StatBlock {

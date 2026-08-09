@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { getArticles, getRecommendedArticles } from '@/api'
 import { profile } from '@/data/profile'
 import type { Article } from '@/types'
@@ -7,6 +8,7 @@ import { ArrowRight, Search, Tag, User } from 'lucide-react'
 import SEO from '@/components/SEO'
 import { animateScrollReveal, animateStagger } from '@/utils/gsapAnimations'
 import { gsap } from 'gsap'
+import { SpotlightCard, BlurText, ShinyText, Magnet } from '@/components/reactbits'
 
 export default function Blog() {
   const [articles, setArticles] = useState<Article[]>([])
@@ -87,12 +89,12 @@ export default function Blog() {
       {/* 博客头部 - 工业极简风 */}
       <section ref={headerRef} className="pt-40 pb-20 bg-[var(--color-black)] text-white overflow-hidden relative">
         <div className="container-narrow relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 mb-8">
-            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full" />
-            <span className="text-[10px] font-bold text-white uppercase tracking-widest">思想库与技术简报</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 mb-8 rounded-full">
+            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full animate-pulse" />
+            <ShinyText text="思想库与技术简报" speed={5} color="#ffffff" />
           </div>
           <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl mb-6 tracking-tighter">
-            内容 <span className="text-[var(--color-primary)]">发布</span>
+            <BlurText text="内容" delay={0.1} /> <span className="text-[var(--color-primary)]">发布</span>
           </h1>
           <p className="text-xl text-white/40 font-light max-w-2xl leading-relaxed">
             深度解析开发笔记、生活随笔与前沿项目总结。
@@ -102,41 +104,57 @@ export default function Blog() {
       </section>
 
       {/* 分类导航条 */}
-      <section className="sticky top-16 z-40 bg-white border-b border-gray-100 py-6">
+      <section className="sticky top-16 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 py-6">
         <div className="container-narrow flex items-center justify-between gap-8 overflow-x-auto no-scrollbar">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setFilter(null)}
-              className={`px-6 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
+              className={`relative px-6 py-2.5 text-xs font-bold uppercase tracking-widest rounded-full transition-all ${
                 filter === null 
-                  ? 'bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/20' 
-                  : 'bg-[var(--color-surface)] text-gray-400 hover:bg-gray-100'
+                  ? 'text-white' 
+                  : 'text-gray-500 hover:text-black hover:bg-gray-100'
               }`}
             >
-              全部内容
+              {filter === null && (
+                <motion.div
+                  layoutId="active-category-pill"
+                  className="absolute inset-0 bg-[var(--color-primary)] rounded-full shadow-lg shadow-[var(--color-primary)]/25"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">全部内容</span>
             </button>
+
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
-                className={`px-6 py-2 text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${
+                className={`relative px-6 py-2.5 text-xs font-bold uppercase tracking-widest whitespace-nowrap rounded-full transition-all ${
                   filter === cat 
-                    ? 'bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/20' 
-                    : 'bg-[var(--color-surface)] text-gray-400 hover:bg-gray-100'
+                    ? 'text-white' 
+                    : 'text-gray-500 hover:text-black hover:bg-gray-100'
                 }`}
               >
-                {cat}
+                {filter === cat && (
+                  <motion.div
+                    layoutId="active-category-pill"
+                    className="absolute inset-0 bg-[var(--color-primary)] rounded-full shadow-lg shadow-[var(--color-primary)]/25"
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{cat}</span>
               </button>
             ))}
           </div>
-          <div className="hidden md:flex items-center gap-4 px-4 py-2 bg-[var(--color-surface)] border border-gray-100">
+
+          <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-100/90 border border-gray-200 rounded-full focus-within:border-[var(--color-primary)] transition-colors">
             <Search size={14} className="text-gray-400" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="搜索文章..."
-              className="bg-transparent border-none outline-none text-xs text-[var(--color-black)] w-40"
+              className="bg-transparent border-none outline-none text-xs text-gray-900 placeholder-gray-400 w-40"
             />
           </div>
         </div>
@@ -153,72 +171,78 @@ export default function Blog() {
               </div>
             ) : (
               filtered.map((a) => (
-              <div key={a.id} className="blog-article-card">
-                <Link
-                  to={toPostPath(a.slug)}
-                  className="group block"
-                >
-                  <div className="flex flex-col md:flex-row gap-10 items-start">
-                    <div className="w-full md:w-1/3 aspect-[4/3] bg-[var(--color-surface)] overflow-hidden relative border border-gray-100">
-                      <div className="absolute inset-0 bg-[var(--color-primary)]/0 group-hover:bg-[var(--color-primary)]/10 transition-colors duration-500 z-10" />
-                      <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-white shadow-sm text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary)]">
-                        {a.category}
+                <motion.div key={a.id} layout className="blog-article-card">
+                  <SpotlightCard spotlightColor="rgba(0, 113, 227, 0.15)" className="p-0 border border-gray-100 bg-white">
+                    <Link
+                      to={toPostPath(a.slug)}
+                      className="group block p-8"
+                    >
+                      <div className="flex flex-col md:flex-row gap-8 items-start">
+                        <div className="w-full md:w-1/3 aspect-[4/3] bg-gray-900 overflow-hidden relative border border-gray-100 rounded-xl shrink-0">
+                          <div className="absolute inset-0 bg-[var(--color-primary)]/0 group-hover:bg-[var(--color-primary)]/20 transition-colors duration-500 z-10" />
+                          <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-white shadow-sm text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary)] rounded-full">
+                            {a.category}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-[var(--color-primary)] font-display text-xs tracking-[0.3em] mb-3">
+                            {a.date}
+                          </div>
+                          <h2 className="font-display text-2xl text-[var(--color-black)] mb-4 group-hover:text-[var(--color-primary)] transition-colors duration-300 leading-snug">
+                            {a.title}
+                          </h2>
+                          <p className="text-[var(--color-muted)] text-sm font-light leading-relaxed mb-6 line-clamp-2">
+                            {a.summary}
+                          </p>
+                          <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                            <span>评论数 {a.readCount ?? 0}</span>
+                            <span className="w-1 h-1 bg-gray-200 rounded-full" />
+                            <span className="group-hover:text-[var(--color-primary)] transition-colors flex items-center gap-2">
+                              阅读全文 <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-[var(--color-primary)] font-display text-xs tracking-[0.3em] mb-4">
-                        {a.date}
-                      </div>
-                      <h2 className="font-display text-3xl text-[var(--color-black)] mb-6 group-hover:text-[var(--color-primary)] transition-colors duration-300 leading-snug">
-                        {a.title}
-                      </h2>
-                      <p className="text-[var(--color-muted)] text-lg font-light leading-relaxed mb-8 line-clamp-3">
-                        {a.summary}
-                      </p>
-                      <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                        <span>评论数 {a.readCount ?? 0}</span>
-                        <span className="w-1 h-1 bg-gray-200 rounded-full" />
-                        <span className="group-hover:text-[var(--color-primary)] transition-colors flex items-center gap-2">
-                          阅读全文 <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            ))
+                    </Link>
+                  </SpotlightCard>
+                </motion.div>
+              ))
             )}
           </div>
 
           {/* 侧边栏 - 工业风组件 */}
           <aside ref={sidebarRef} className="lg:col-span-4 space-y-16">
-            <div className="p-10 bg-[var(--color-surface)] border border-gray-100">
+            <SpotlightCard spotlightColor="rgba(0, 113, 227, 0.15)" className="p-10 bg-[var(--color-surface)] border border-gray-100 text-white">
               <div className="flex items-center gap-4 mb-8">
                 <User size={20} className="text-[var(--color-primary)]" />
-                <h3 className="font-display text-xs uppercase tracking-[0.3em] text-[var(--color-black)]">发布者信息</h3>
+                <h3 className="font-display text-xs uppercase tracking-[0.3em] text-white">发布者信息</h3>
               </div>
-              <p className="font-display text-2xl text-[var(--color-black)] mb-4">{profile.name}</p>
-              <p className="text-sm text-[var(--color-muted)] font-light leading-relaxed mb-8">{profile.title}</p>
-              <Link to="/about" className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary)] flex items-center gap-2 hover:gap-4 transition-all">
-                详细档案 <ArrowRight size={12} />
-              </Link>
-            </div>
+              <p className="font-display text-2xl text-white mb-4">{profile.name}</p>
+              <p className="text-sm text-white/50 font-light leading-relaxed mb-8">{profile.title}</p>
+              <Magnet strength={0.2}>
+                <Link to="/about" className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary)] flex items-center gap-2 hover:gap-4 transition-all">
+                  详细档案 <ArrowRight size={12} />
+                </Link>
+              </Magnet>
+            </SpotlightCard>
 
             <div>
               <div className="flex items-center gap-4 mb-10">
                 <Tag size={20} className="text-[var(--color-primary)]" />
                 <h3 className="font-display text-xs uppercase tracking-[0.3em] text-[var(--color-black)]">推荐阅读</h3>
               </div>
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {recommendedArticles.map((a) => (
-                  <Link key={a.id} to={toPostPath(a.slug)} className="group block">
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 group-hover:text-[var(--color-primary)] transition-colors">
-                      {a.category}
-                    </div>
-                    <h4 className="font-display text-lg text-[var(--color-black)] leading-snug group-hover:text-[var(--color-primary)] transition-colors">
-                      {a.title}
-                    </h4>
-                  </Link>
+                  <SpotlightCard key={a.id} spotlightColor="rgba(0, 113, 227, 0.1)" className="p-6 bg-white border border-gray-100">
+                    <Link to={toPostPath(a.slug)} className="group block">
+                      <div className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest mb-2">
+                        {a.category}
+                      </div>
+                      <h4 className="font-display text-base text-[var(--color-black)] leading-snug group-hover:text-[var(--color-primary)] transition-colors">
+                        {a.title}
+                      </h4>
+                    </Link>
+                  </SpotlightCard>
                 ))}
               </div>
             </div>
@@ -228,3 +252,4 @@ export default function Blog() {
     </div>
   )
 }
+

@@ -68,18 +68,32 @@ export default function AmbientBackground() {
       }
     }
 
+    let mouseX = width * 0.22
+    let mouseY = height * 0.18
+    let targetMouseX = mouseX
+    let targetMouseY = mouseY
+
+    const handleMouseMove = (e: MouseEvent) => {
+      targetMouseX = e.clientX
+      targetMouseY = e.clientY
+    }
+
     const drawGradient = () => {
+      // Smooth lerp mouse position
+      mouseX += (targetMouseX - mouseX) * 0.05
+      mouseY += (targetMouseY - mouseY) * 0.05
+
       const gradient = context.createRadialGradient(
-        width * 0.22,
-        height * 0.18,
-        40,
-        width * 0.22,
-        height * 0.18,
-        width * 0.65,
+        mouseX,
+        mouseY,
+        20,
+        mouseX,
+        mouseY,
+        width * 0.5,
       )
-      gradient.addColorStop(0, 'rgba(246, 181, 0, 0.16)')
-      gradient.addColorStop(0.4, 'rgba(246, 181, 0, 0.06)')
-      gradient.addColorStop(1, 'rgba(246, 181, 0, 0)')
+      gradient.addColorStop(0, 'rgba(0, 113, 227, 0.18)')
+      gradient.addColorStop(0.5, 'rgba(175, 82, 222, 0.06)')
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
       context.fillStyle = gradient
       context.fillRect(0, 0, width, height)
 
@@ -91,8 +105,8 @@ export default function AmbientBackground() {
         height * 0.75,
         width * 0.5,
       )
-      sideGlow.addColorStop(0, 'rgba(230, 0, 18, 0.14)')
-      sideGlow.addColorStop(1, 'rgba(230, 0, 18, 0)')
+      sideGlow.addColorStop(0, 'rgba(0, 113, 227, 0.12)')
+      sideGlow.addColorStop(1, 'rgba(0, 0, 0, 0)')
       context.fillStyle = sideGlow
       context.fillRect(0, 0, width, height)
     }
@@ -125,7 +139,7 @@ export default function AmbientBackground() {
             context.beginPath()
             context.moveTo(particle.x, particle.y)
             context.lineTo(neighbor.x, neighbor.y)
-            context.strokeStyle = `rgba(246, 181, 0, ${0.08 * (1 - distance / 140)})`
+            context.strokeStyle = `rgba(0, 113, 227, ${0.08 * (1 - distance / 140)})`
             context.lineWidth = 0.8
             context.stroke()
           }
@@ -138,9 +152,11 @@ export default function AmbientBackground() {
     resize()
     render()
     window.addEventListener('resize', resize)
+    window.addEventListener('mousemove', handleMouseMove)
 
     return () => {
       window.removeEventListener('resize', resize)
+      window.removeEventListener('mousemove', handleMouseMove)
       window.cancelAnimationFrame(animationFrame)
     }
   }, [density])
