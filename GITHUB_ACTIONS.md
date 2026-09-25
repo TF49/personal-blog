@@ -10,9 +10,11 @@
 
 ### 2. Update Articles from GitHub Issues (`.github/workflows/update-articles.yml`)
 - **触发条件**：
+  - **定时触发**：每小时自动运行一次（cron: `0 * * * *`）
   - 手动触发（从 Actions 页面）
   - Repository dispatch 事件
 - **功能**：从 GitHub Issues 获取最新文章并更新 `public/articles.json`
+- **智能检测**：只有在文章有变化时才会提交，避免无意义的提交
 
 ## 如何添加新文章
 
@@ -23,19 +25,17 @@
 4. Issue 标题 = 文章标题
 5. Issue 正文 = 文章内容（建议添加 frontmatter）
 
-### 步骤 2：触发文章更新
-有两种方式触发文章更新：
+### 步骤 2：等待自动更新
+- workflow 会每小时自动检查一次新的文章
+- 通常在 1 小时内，新文章会自动同步到网站
+- 如果不想等待，可以手动触发 workflow（见下方）
 
-#### 方式 A：手动触发（推荐用于快速测试）
+### 步骤 3：手动触发（可选，快速更新）
 1. 访问 personal-blog 仓库的 Actions 页面
 2. 选择 "Update Articles from GitHub Issues" workflow
 3. 点击 "Run workflow" 按钮
 4. 等待 workflow 完成后，`public/articles.json` 会自动更新
-
-#### 方式 B：推送代码触发（推荐用于正式发布）
-1. 等待方式 A 完成后，拉取最新的 `public/articles.json`
-2. 推送代码到 `main` 分支
-3. GitHub Actions 会自动构建并部署到网站
+5. 网站会自动部署（因为更新会触发推送）
 
 ## 配置要求
 
@@ -64,3 +64,11 @@ date: 2026-09-25
 - `summary`：列表页摘要（缺省时从正文截取）
 - `category`：分类名（缺省时为"未分类"）
 - `date`：发布日期（缺省时使用 Issue 创建日期）
+
+## 工作流程总结
+
+1. 你在 https://github.com/TF49/blog-content/issues 创建新 Issue（添加 `blog` label）
+2. 等待最多 1 小时，workflow 自动检测并更新文章
+3. 文章更新后自动提交到仓库
+4. 推送触发主部署 workflow
+5. 网站自动更新，新文章显示在博客列表中

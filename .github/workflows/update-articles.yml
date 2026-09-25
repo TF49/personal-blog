@@ -1,6 +1,8 @@
 name: Update Articles from GitHub Issues
 
 on:
+  schedule:
+    - cron: '0 * * * *'  # Run every hour
   workflow_dispatch:
   repository_dispatch:
     types: [update-articles]
@@ -33,10 +35,20 @@ jobs:
           BLOG_CONTENT_TOKEN: ${{ secrets.BLOG_CONTENT_TOKEN }}
         run: npm run generate:articles
 
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if git diff --quiet public/articles.json; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Commit and push
+        if: steps.check-changes.outputs.no_changes == 'false'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add public/articles.json
-          git diff --staged --quiet || git commit -m "Update articles from GitHub Issues"
+          git commit -m "Update articles from GitHub Issues"
           git push
