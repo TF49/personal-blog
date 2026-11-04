@@ -30,6 +30,7 @@ export interface Article {
   category: string
   date: string
   readCount?: number
+  cover?: string
 }
 
 export interface TimelineEvent {

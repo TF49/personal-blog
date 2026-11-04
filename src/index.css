@@ -126,6 +126,122 @@
     to { opacity: 1; }
   }
 
+  /* ===== P2: article-body 阅读版式 ===== */
+  .article-body {
+    font-size: 17px;
+    line-height: 1.85;
+    color: var(--fg);
+  }
+  .article-body p {
+    margin-bottom: 1.5em;
+  }
+  .article-body h2 {
+    font-size: clamp(24px, 2vw + 16px, 32px);
+    line-height: 1.2;
+    font-weight: 600;
+    color: var(--fg);
+    margin-top: 2.5em;
+    margin-bottom: 0.75em;
+  }
+  .article-body h3 {
+    font-size: clamp(20px, 1.5vw + 14px, 26px);
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--fg);
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+  }
+  .article-body h4 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--fg);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  .article-body a {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .article-body a:hover {
+    text-decoration: underline;
+  }
+  .article-body code:not(pre code) {
+    font-family: theme('fontFamily.mono');
+    background-color: var(--ghost);
+    color: var(--fg-muted);
+    border-radius: 3px;
+    padding: 0.1em 0.4em;
+    font-size: 0.9em;
+  }
+  .article-body pre {
+    font-family: theme('fontFamily.mono');
+    background-color: var(--ghost);
+    color: var(--fg-muted);
+    border-radius: 4px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin-bottom: 1.5em;
+    position: relative;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .article-body pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+    border-radius: 0;
+  }
+  .article-body blockquote {
+    border-left: 2px solid var(--line);
+    padding-left: 1rem;
+    color: var(--fg-muted);
+    font-style: italic;
+    margin-bottom: 1.5em;
+  }
+  .article-body img {
+    border-radius: 4px;
+    width: 100%;
+    height: auto;
+    margin-bottom: 1.5em;
+  }
+  .article-body ul,
+  .article-body ol {
+    padding-left: 1.5em;
+    margin-bottom: 1.5em;
+  }
+  .article-body li {
+    margin-bottom: 0.4em;
+  }
+  .article-body hr {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 2em 0;
+  }
+  /* Copy code button injected by BlogPost */
+  .article-body .code-copy-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.2em 0.6em;
+    font-size: 10px;
+    font-family: theme('fontFamily.mono');
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fg-muted);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: color 150ms, background 150ms, border-color 150ms;
+  }
+  .article-body .code-copy-btn:hover {
+    color: var(--fg);
+    border-color: var(--fg);
+  }
+
   /* ===== 以下为旧设计样式,P2–P5 随旧页面重写删除 ===== */
   .font-display {
     font-family: theme('fontFamily.sans');

@@ -1,44 +1,47 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { ArrowLeftIcon, ShareNetworkIcon } from '@phosphor-icons/react'
 import { getArticleBySlug, getArticles } from '@/api'
 import type { Article } from '@/types'
-import { ArrowLeft, Clock, Eye, Share2, Bookmark } from 'lucide-react'
 import { getShareUrl, shareOrCopy } from '@/utils/share'
 import { useToast } from '@/components/toast/ToastProvider'
 import SEO from '@/components/SEO'
 import DOMPurify from 'dompurify'
-import { animateEntrance, animateScrollReveal } from '@/utils/gsapAnimations'
-import { gsap } from 'gsap'
-import { BlurText, ClickSpark, SpotlightCard } from '@/components/reactbits'
+import ToneSection from '@/components/site/ToneSection'
+import SectionLabel from '@/components/site/SectionLabel'
+import TagPill from '@/components/site/TagPill'
+import ArticleBody from '@/components/site/ArticleBody'
+import { ICON_SM } from '@/components/site/icon'
+
+function readingTime(html: string): string {
+  // Strip tags to get plain text, ~350 chars/min for Chinese
+  const text = html.replace(/<[^>]*>/g, '').trim()
+  const mins = Math.max(1, Math.round(text.length / 350))
+  return `约 ${mins} 分钟`
+}
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
   const [post, setPost] = useState<Article | null | undefined>(undefined)
   const [related, setRelated] = useState<Article[]>([])
   const [shareBusy, setShareBusy] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0)
   const toast = useToast()
-
-  const { scrollYProgress } = useScroll()
-  const progressWidth = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
-  
-  // Refs for GSAP animations
-  const contentRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
   const articleRef = useRef<HTMLDivElement>(null)
-  const relatedRef = useRef<HTMLDivElement>(null)
 
   const toPostPath = (s: string) => `/blog/${encodeURIComponent(s)}`
 
   const shareUrl = useMemo(() => getShareUrl(), [slug])
 
+  const postContent = post && typeof post.content === 'string' ? post.content : ''
   const safeHtml = useMemo(() => {
-    const html = post && typeof post.content === 'string' ? post.content : ''
-    return DOMPurify.sanitize(html, {
+    // eslint-disable-next-line no-useless-escape
+    const URI_RE = /^(?:(?:https?|mailto):|\/)/ as unknown as RegExp
+    return DOMPurify.sanitize(postContent, {
       USE_PROFILES: { html: true },
-      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/)/i,
+      ALLOWED_URI_REGEXP: URI_RE,
     })
-  }, [post && typeof post.content === 'string' ? post.content : ''])
+  }, [postContent])
 
   const jsonLd = useMemo(() => {
     if (!post) return undefined
@@ -50,6 +53,8 @@ export default function BlogPost() {
       dateModified: post.date,
     }
   }, [post])
+
+  const estReadingTime = useMemo(() => readingTime(safeHtml), [safeHtml])
 
   useEffect(() => {
     if (!slug) return
@@ -68,182 +73,166 @@ export default function BlogPost() {
     window.scrollTo(0, 0)
   }, [slug])
 
-  // Setup animations & code block copy buttons when post is loaded
+  // Reading progress bar
   useEffect(() => {
-    if (!post) return
-    
-    const ctx = gsap.context(() => {
-      // Header entrance animation
-      if (headerRef.current) {
-        animateEntrance(headerRef.current, {
-          from: { opacity: 0, y: 30 },
-          delay: 0.2
-        })
-      }
-      
-      // Article content scroll animation
-      if (articleRef.current) {
-        animateScrollReveal(articleRef.current, {
-          from: { opacity: 0, y: 20 }
-        })
+    const handleScroll = () => {
+      const doc = document.documentElement
+      const scrollTop = window.scrollY || doc.scrollTop
+      const scrollHeight = doc.scrollHeight - doc.clientHeight
+      setScrollProgress(scrollHeight > 0 ? Math.min(scrollTop / scrollHeight, 1) : 0)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
-        // Inject copy buttons for pre code blocks
-        const preBlocks = articleRef.current.querySelectorAll('pre')
-        preBlocks.forEach((pre) => {
-          if (pre.querySelector('.code-copy-btn')) return
-          pre.style.position = 'relative'
-          const btn = document.createElement('button')
-          btn.className = 'code-copy-btn absolute top-3 right-3 px-3 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-white/60 bg-white/10 border border-white/15 rounded-md hover:bg-[var(--color-primary)] hover:text-white hover:border-[var(--color-primary)] transition-all'
-          btn.innerText = 'Copy Code'
-          btn.onclick = async () => {
-            const code = pre.querySelector('code')?.innerText || pre.innerText
-            try {
-              await navigator.clipboard.writeText(code)
-              btn.innerText = 'Copied!'
-              toast.success('已复制代码段')
-              setTimeout(() => {
-                btn.innerText = 'Copy Code'
-              }, 2000)
-            } catch {
-              toast.error('复制失败')
-            }
-          }
-          pre.appendChild(btn)
-        })
+  // Inject copy code buttons in article after content loads
+  useEffect(() => {
+    if (!post || !articleRef.current) return
+    const preBlocks = articleRef.current.querySelectorAll('pre')
+    preBlocks.forEach((pre) => {
+      if (pre.querySelector('.code-copy-btn')) return
+      const btn = document.createElement('button')
+      btn.className = 'code-copy-btn'
+      btn.innerText = 'Copy'
+      btn.type = 'button'
+      btn.onclick = async () => {
+        const code = pre.querySelector('code')?.innerText || pre.innerText
+        try {
+          await navigator.clipboard.writeText(code)
+          btn.innerText = 'Copied!'
+          toast.success('已复制代码段')
+          setTimeout(() => {
+            btn.innerText = 'Copy'
+          }, 2000)
+        } catch {
+          toast.error('复制失败')
+        }
       }
-      
-      // Related articles animation
-      if (relatedRef.current && related.length > 0) {
-        animateScrollReveal(relatedRef.current, {
-          from: { opacity: 0, y: 25 }
-        })
-      }
-    }, contentRef)
-    
-    return () => ctx.revert()
-  }, [post, related.length])
+      pre.appendChild(btn)
+    })
+  }, [post, safeHtml])
 
   if (!slug) return null
+
   if (post === undefined) {
     return (
-      <div className="section-padding text-center text-[var(--color-muted)] bg-white min-h-screen flex items-center justify-center font-display uppercase tracking-widest text-xs">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
-          正在同步内容数据...
-        </div>
-      </div>
+      <ToneSection tone="ink" as="div" className="min-h-screen pt-[64px] flex items-center justify-center">
+        <p className="text-label text-fg-muted uppercase tracking-widest">加载中…</p>
+      </ToneSection>
     )
   }
+
   if (post === null) {
     return (
-      <div className="section-padding text-center bg-white min-h-screen flex flex-col items-center justify-center">
+      <ToneSection tone="ink" as="div" className="min-h-screen pt-[64px] flex flex-col items-center justify-center">
         <SEO title="文章不存在" description="你访问的文章不存在或已被移除。" noindex />
-        <h1 className="font-display text-9xl text-gray-100 mb-8">404</h1>
-        <p className="text-[var(--color-muted)] text-xl font-light mb-12">抱歉，您请求的档案不存在或已被移除。</p>
-        <Link to="/blog" className="btn-primary">返回博客矩阵</Link>
-      </div>
+        <h1 className="text-display font-medium text-fg-muted mb-8">404</h1>
+        <p className="text-body text-fg-muted mb-12">抱歉，您请求的文章不存在或已被移除。</p>
+        <Link to="/blog" className="text-label border border-line px-6 py-3 rounded-pill hover:border-fg transition-colors">
+          返回文章列表
+        </Link>
+      </ToneSection>
     )
   }
 
   return (
-    <div ref={contentRef} className="bg-white min-h-screen pt-24 relative">
+    <ToneSection tone="ink" as="div" className="min-h-screen pt-[64px]">
       <SEO title={post.title} description={post.summary} jsonLd={jsonLd} />
-      <motion.div 
-        className="fixed top-0 left-0 h-1 bg-[var(--color-primary)] z-[100] origin-left shadow-[0_0_12px_var(--color-primary)]"
-        style={{ width: progressWidth }}
+
+      {/* Reading progress bar */}
+      <div
+        className="fixed top-0 left-0 h-0.5 bg-fg z-[100] origin-left transition-none"
+        style={{ width: `${scrollProgress * 100}%` }}
+        aria-hidden="true"
       />
 
-      <div className="container-narrow max-w-4xl mx-auto px-6 py-20">
-        <div ref={headerRef}>
-          <Link
-            to="/blog"
-            className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--color-primary)] mb-12 hover:gap-4 transition-all"
-          >
-            <ArrowLeft size={14} /> 返回博客列表
-          </Link>
-
-          <header className="mb-20">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/10 text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary)] mb-8 rounded-full">
-              <Bookmark size={10} /> {post.category}
-            </div>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-[var(--color-black)] mb-10 tracking-tighter leading-tight">
-              <BlurText text={post.title} delay={0.1} />
-            </h1>
-            <div className="flex flex-wrap items-center gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 border-y border-gray-100 py-6">
-              <div className="flex items-center gap-2">
-                <Clock size={14} className="text-[var(--color-primary)]" />
-                <time dateTime={post.date}>{post.date}</time>
-              </div>
-              <div className="flex items-center gap-2">
-                <Eye size={14} className="text-[var(--color-primary)]" />
-                <span>评论数 {post.readCount ?? 0}</span>
-              </div>
-              <div className="ml-auto flex gap-4">
-                <ClickSpark sparkColor="#0071e3" sparkCount={14}>
-                  <button
-                    type="button"
-                    aria-label="分享"
-                    disabled={shareBusy}
-                    className={`transition-colors p-2 rounded-full border border-gray-100 hover:border-[var(--color-primary)] ${shareBusy ? 'opacity-50 cursor-not-allowed' : 'hover:text-[var(--color-primary)]'}`}
-                    onClick={async () => {
-                      if (shareBusy) return
-                      setShareBusy(true)
-                      try {
-                        const res = await shareOrCopy({
-                          title: post.title,
-                          url: shareUrl,
-                        })
-                        if (res.kind === 'copied') toast.success('已复制文章链接')
-                      } catch {
-                        toast.error('分享失败，请重试')
-                      } finally {
-                        window.setTimeout(() => setShareBusy(false), 800)
-                      }
-                    }}
-                  >
-                    <Share2 size={14} />
-                  </button>
-                </ClickSpark>
-              </div>
-            </div>
-          </header>
-
-          <div
-            ref={articleRef}
-            className="article-content prose prose-lg max-w-none prose-headings:font-display prose-headings:tracking-tighter prose-p:text-gray-600 prose-p:leading-loose prose-a:text-[var(--color-primary)] prose-img:border prose-img:border-gray-100"
-            dangerouslySetInnerHTML={{ __html: safeHtml }}
-          />
-
-          {/* 相关推荐 - 工业风卡片 */}
-          {related.length > 0 && (
-            <section ref={relatedRef} className="mt-32 pt-20 border-t border-gray-100">
-              <div className="flex items-end justify-between mb-12">
-                <h2 className="font-display text-3xl text-[var(--color-black)] tracking-tighter">
-                  相关 <span className="text-[var(--color-primary)]">推荐</span>
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {related.map((a) => (
-                  <SpotlightCard key={a.id} spotlightColor="rgba(0, 113, 227, 0.1)" className="p-0 border border-gray-100 bg-white">
-                    <Link
-                      to={toPostPath(a.slug)}
-                      className="group block p-8 h-full"
-                    >
-                      <div className="text-[var(--color-primary)] font-display text-[10px] tracking-widest mb-4 uppercase">
-                        {a.category}
-                      </div>
-                      <h3 className="font-display text-lg text-[var(--color-black)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2 leading-snug">
-                        {a.title}
-                      </h3>
-                    </Link>
-                  </SpotlightCard>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+      {/* Back link */}
+      <div className="site-wrap pt-12 pb-8">
+        <Link
+          to="/blog"
+          className="inline-flex items-center gap-2 text-label text-fg-muted hover:text-fg transition-colors"
+        >
+          <ArrowLeftIcon {...ICON_SM} />
+          文章列表
+        </Link>
       </div>
-    </div>
+
+      {/* Article header */}
+      <ToneSection tone="ink" as="header" className="site-wrap pb-16">
+        <SectionLabel label="ARTICLE" />
+        <TagPill label={post.category} />
+        <h1 className="text-h1 font-medium mt-6 max-w-article">{post.title}</h1>
+        <div className="mt-6 flex flex-wrap items-center gap-6 text-label text-fg-muted border-t border-line pt-6">
+          <time dateTime={post.date}>{post.date}</time>
+          {post.readCount !== undefined && (
+            <span>评论 {post.readCount}</span>
+          )}
+          <span>{estReadingTime}</span>
+          <div className="ml-auto">
+            <button
+              type="button"
+              aria-label="分享文章"
+              disabled={shareBusy}
+              className={[
+                'inline-flex items-center gap-2 text-label border border-line rounded-pill px-4 py-1.5',
+                'hover:border-fg hover:text-fg transition-colors',
+                shareBusy ? 'opacity-50 cursor-not-allowed' : '',
+              ].join(' ')}
+              onClick={async () => {
+                if (shareBusy) return
+                setShareBusy(true)
+                try {
+                  const res = await shareOrCopy({ title: post.title, url: shareUrl })
+                  if (res.kind === 'copied') toast.success('已复制文章链接')
+                } catch {
+                  toast.error('分享失败，请重试')
+                } finally {
+                  window.setTimeout(() => setShareBusy(false), 800)
+                }
+              }}
+            >
+              <ShareNetworkIcon {...ICON_SM} />
+              分享
+            </button>
+          </div>
+        </div>
+      </ToneSection>
+
+      {/* Article body — sage background for readability */}
+      <ToneSection tone="sage" as="article" className="py-24">
+        <div className="site-wrap">
+          <div className="max-w-article mx-auto" ref={articleRef}>
+            <ArticleBody html={safeHtml} />
+          </div>
+        </div>
+      </ToneSection>
+
+      {/* Related articles */}
+      {related.length > 0 && (
+        <ToneSection tone="ink" as="section" className="py-24 site-wrap">
+          <SectionLabel label="RELATED" />
+          <h2 className="text-h2 font-medium mt-8 mb-12">相关文章</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8">
+            {related.map((a, idx) => {
+              const num = String(idx + 1).padStart(2, '0')
+              return (
+                <Link
+                  key={a.id}
+                  to={toPostPath(a.slug)}
+                  className="group flex flex-col gap-2 py-6 border-t border-line hover:opacity-70 transition-opacity"
+                >
+                  <span className="text-label text-fg-muted">{num}</span>
+                  <span className="text-label text-fg-muted">{a.category}</span>
+                  <h3 className="text-h2 font-medium leading-snug mt-1 group-hover:text-fg transition-colors">
+                    {a.title}
+                  </h3>
+                  <span className="text-label text-fg-muted mt-auto pt-2">{a.date}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </ToneSection>
+      )}
+    </ToneSection>
   )
 }
-

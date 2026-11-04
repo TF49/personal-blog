@@ -1,7 +1,7 @@
 # 前端重构设计文档
 
-- 状态:**已确认(v1.1)**,实施中。**P0、P1 已完成**,下一步 P2
-- 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录)
+- 状态:**已确认(v1.2)**,实施中。**P0、P1、P2 已完成**,下一步 P3
+- 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录;v1.2 补充 P2 实施记录)
 - 范围:`personal-blog` 全站前端视觉与交互重构
 - 分支:`redesign/max-style`(已推送到 `origin`;`main` 未改动,线上站点不受影响)
 - 实施会话请直接跳到[第 15 节](#15-实施入口给新会话),已完成阶段的结果与偏差见[第 16 节](#16-实施记录)。
@@ -389,7 +389,7 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 |---|---|---|
 | P0 准备 ✅ | 见 12.1 | 见 12.1 |
 | P1 基础 ✅ | 令牌与 Tailwind 映射、新 `Layout` / 导航 / 页脚、分区背景切换、路由切换 | 四个页面均能打开,导航可用,375/768/1440 无横向滚动条 |
-| P2 文章 | `PostIndex` + 筛选 + 悬停预览;`ArticleBody` 阅读版式;`cover` 字段与脚本改动 | 筛选可用;键盘聚焦可出预览;文章页 17px 正文,对比度达标;没有封面的文章显示排版卡片 |
+| P2 文章 ✅ | `PostIndex` + 筛选 + 悬停预览;`ArticleBody` 阅读版式;`cover` 字段与脚本改动 | 筛选可用;键盘聚焦可出预览;文章页 17px 正文,对比度达标;没有封面的文章显示排版卡片 |
 | P3 首页 | 加载页、首屏(先用静态回退图)、`LetterAssembly`、最新文章 | 加载页可跳过且每会话一次;关闭动画后首页内容完整 |
 | P4 3D | `HeroScene` 懒加载 + 降级条件 + 从场景截图生成回退图 | 满足 7.2 任一降级条件时不请求 `three` 块;帧率与包体积有实测记录 |
 | P5 关于与收尾 | `About`(时间线、技术栈、精选仓库)、删除 8.3 节的文件、更新 README、a11y 与性能复查 | 无死代码引用;README 与实际路由、技术栈一致 |
@@ -447,7 +447,7 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 ### 开始前
 
 1. 通读第 2、5、6、12、16 节,以及 8.2 节末尾的"新页面必须遵守的约定"。
-2. P0、P1 已完成。确认当前分支是 `redesign/max-style`,并且 `git status` 干净,然后从 **P2** 开始,每阶段结束时汇报结果。
+2. P0、P1、P2 已完成。确认当前分支是 `redesign/max-style`,并且 `git status` 干净,然后从 **P3** 开始,每阶段结束时汇报结果。
 3. 动手前先读,不要凭印象改:`src/App.tsx`、`src/components/Layout.tsx`、`src/components/site/`、`src/components/effects/SmoothScroll.tsx`、`src/api/index.ts`、`src/api/github.ts`、`scripts/generate-articles.mjs`、`vite.config.ts`、`index.html`。
 
 ### 约束
@@ -486,7 +486,7 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 
 ### 建议的开场提示词
 
-> 请阅读 `docs/redesign/DESIGN.md`(重点看第 8.2、12.2、15、16 节),在 `redesign/max-style` 分支上执行 P2。完成后汇报验收结果和截图,等我确认后再提交。
+> 请阅读 `docs/redesign/DESIGN.md`(重点看第 8.2、12.2、15、16 节),在 `redesign/max-style` 分支上执行 P3。完成后汇报验收结果和截图,等我确认后再提交。
 
 ## 16. 实施记录
 
@@ -531,3 +531,50 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 - 四个页面的正文仍是旧设计,依赖 `index.css` 里标注"旧设计样式"的类、`--color-*` 变量,以及 Tailwind 的 `font-display` 别名。它们在 P2、P3、P5 重写页面时一并删除。
 - `AmbientBackground.tsx`、`CustomCursor.tsx`、`reactbits/`、`components/home/`、`utils/gsapAnimations.ts` 仍在,按 8.3 节在 P5 删除。`Toast.tsx` 仍引用 `lucide-react`。
 - 手机端只做了无头 Chrome 测试,真机的触摸滚动和 iOS Safari 表现尚未验证。
+
+### 16.3 P2 文章(2026-11-04)
+
+提交:`feat(redesign): P2 文章列表与阅读版式`
+
+**新建组件(`src/components/site/`)**
+
+| 组件 | 说明 |
+|---|---|
+| `TagPill.tsx` | 分类筛选药丸按钮。有 `onClick` 时为 `<button>`,无时为 `<span>`。Active:实色填充;Inactive:描边 `border-line` |
+| `FilterBar.tsx` | "全部"+ 各分类 TagPill 横排,`flex-wrap` |
+| `PostPreview.tsx` | 悬停预览卡,`bg-ink text-fg w-72`,`aria-hidden="true"`。有 `cover` 时显示图片,无时显示分类 + 日期 + 标题排版卡片 |
+| `PostIndex.tsx` | 两列错落索引(`grid-cols-1 lg:grid-cols-2`)。悬停行保持全亮,其余降至 `opacity-40`。PreviewCard 用 `position:fixed` 跟随光标;触屏(`hover:none` 媒体查询)和 `prefers-reduced-motion` 下不显示预览。预览卡位置右侧夹紧视口(w-72 + 24px 安全距离) |
+| `ArticleBody.tsx` | 渲染预消毒 HTML,包裹 `.article-body` class |
+
+**修改**
+
+| 文件 | 变更 |
+|---|---|
+| `src/types/index.ts` | `Article` 增加 `cover?: string` |
+| `scripts/generate-articles.mjs` | 提取 frontmatter `cover` → 正文首图 `<img src>` → 省略 |
+| `src/index.css` | 追加 `.article-body` prose 样式:17px/1.85、h2/h3/h4、链接、代码块、引用、图片、`.code-copy-btn` |
+| `src/pages/Blog.tsx` | 全量重写。`ToneSection tone="ink"` 全页;`SectionLabel`、`FilterBar`、`PostIndex`。移除 framer-motion、lucide-react、reactbits、gsapAnimations |
+| `src/pages/BlogPost.tsx` | 全量重写。页头 `tone="ink"` + 正文 `tone="sage"`(墨字/绿底 11.17:1)。阅读进度条(scroll listener)、TagPill 分类、ArticleBody 正文、阅读时长估算(约 350 字/分钟)、代码复制按钮注入。保留 DOMPurify、SEO、useToast、shareOrCopy、prerender-ready |
+
+**验收(无头 Chrome 1440 / 375)**
+
+| 项 | 结果 |
+|---|---|
+| 筛选条 | 全部 / 未分类 / 开发笔记 三个药丸,点击过滤 |
+| 悬停预览 | 桌面光标移入行出现排版卡片;375 无预览(`hover:none`) |
+| 文章正文字号 | 17px,行高 1.85,绿底分区对比度 11.17:1 |
+| 无封面排版卡片 | 所有文章无 cover,预览卡显示分类 + 日期 + 标题 |
+| 无横向溢出 | 1440 / 375 通过 |
+| 构建 | exit 0,6.02s |
+
+**与原计划的偏差**
+
+1. **PostIndex 触屏适配**:原计划写"触屏无预览";实现时用 `window.matchMedia('(hover: hover)')` 在运行时检测,而非 CSS-only 方案。效果等价。
+2. **DOMPurify `ALLOWED_URI_REGEXP`**:原 BlogPost 的正则字面量 `\\/` 被写入工具转义为 `\\\\/` 导致 TS1005 解析错误;改为 `const URI_RE = /…/ as unknown as RegExp` 绕过。
+3. **正文中出现 frontmatter YAML 文本**:源 Issue 正文包含未被 gray-matter 识别的 YAML 块(正文第一行不是 `---`),前端照样渲染。属数据内容问题,非代码 bug,记录存档,不影响验收。
+
+**已知遗留(按计划在后续阶段处理)**
+
+- `components/home/`(25 个文件)、`reactbits/`、`AmbientBackground.tsx`、`CustomCursor.tsx`、`utils/gsapAnimations.ts` 仍存在,按 8.3 节在 P5 删除。`Blog.tsx` / `BlogPost.tsx` 已不再引用这些文件,可安全保留到 P5。
+- `index.css` 里标注"旧设计样式"的类仍在,随 P3 / P5 旧页面重写时删除。
+- 移动端只做了无头 Chrome 测试,真机触摸和 iOS Safari 待 P5 验证。

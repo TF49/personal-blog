@@ -169,6 +169,16 @@ async function main() {
       // "readCount" is used as comment count (Issues has no pageviews)
       const readCount = typeof it.comments === 'number' ? it.comments : 0
 
+      // Extract cover: frontmatter.cover > first img in rendered HTML > undefined
+      let cover
+      if (typeof fm.cover === 'string' && fm.cover.trim()) {
+        cover = fm.cover.trim()
+      } else {
+        // extract first img src from rendered HTML
+        const imgMatch = md.render(contentMd).match(/<img[^>]+src="([^"]+)"/)
+        if (imgMatch) cover = imgMatch[1]
+      }
+
       return {
         id: issueId,
         title,
@@ -178,6 +188,7 @@ async function main() {
         category,
         date,
         readCount,
+        ...(cover ? { cover } : {}),
       }
     })
     .sort((a, b) => String(b.date).localeCompare(String(a.date)))
