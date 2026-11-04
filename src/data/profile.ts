@@ -2,11 +2,11 @@ import type { AuthorProfile } from '@/types'
 
 export const profile: AuthorProfile = {
   name: '涂家乐',
-  title: '在校生 · 聚焦全栈开发与运维实践',
-  bio: '目前主攻 Java 全家桶 + 前端框架（React / Vue），有完整的课程项目与自驱动实战经历：从接口设计、数据库建模到前后端联调与上线部署。熟悉 Linux（以 CentOS 为主）下的服务部署与环境搭建，正在通过博客和开源项目系统整理所学知识，并持续探索高性能、高可用的工程实践。',
+  title: '全栈工程师 · AI 工具链 · 独立开发者',
+  bio: '专注全栈开发，从 Java 后端、Android 移动端到现代前端（React / Vue / Next.js）全面覆盖。毕业后持续拓展技术边界，深入 Go / Rust / Python，主导多个商业 SaaS 产品落地，擅长从 0 到 1 构建完整系统。热衷于将 AI 能力工程化，做真正好用的开发者工具。',
   wechat: '17378406511',
   email: '2131969030@qq.com',
-  location: '中国 · 湖北',
+  location: '中国 · 四川',
   social: [
     { name: 'GitHub', url: 'https://github.com/TF49' },
     { name: 'Gitee', url: '#' },

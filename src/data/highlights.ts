@@ -2,21 +2,21 @@ import type { HighlightCard } from '@/types'
 
 export const highlights: HighlightCard[] = [
   {
-    title: '后端',
-    subtitle: 'Spring Boot',
-    description: '熟悉 Java 生态，Spring / Spring Boot 做课程项目与小型实战，Maven 构建与基础运维部署。',
+    title: '全栈后端',
+    subtitle: 'Java · Go · Rust',
+    description: '从 Spring Boot 微服务到 Go 高性能 API 网关，再到 Rust + Tauri 跨平台桌面应用，覆盖多语言后端全链路。',
     icon: 'backend',
   },
   {
-    title: '前端',
-    subtitle: 'Vue / React',
-    description: '掌握 Vue 与 React，能独立完成前端页面与交互；同时接触 Android 开发，拓展多端能力。',
+    title: '前端交互',
+    subtitle: 'React · Next.js · Vue',
+    description: '熟练使用 React / Next.js / Vue 构建现代前端，搭配 Tailwind CSS、Framer Motion 实现精致动效与 UI 设计系统。',
     icon: 'frontend',
   },
   {
-    title: '运维',
-    subtitle: 'Linux / Docker',
-    description: '使用 CentOS 做服务部署与环境搭建，正在学习 Docker 与全栈部署，持续积累运维经验。',
+    title: 'AI 工程化',
+    subtitle: 'LLM · MCP · Python',
+    description: '将 AI 能力落地为真实产品：LLM 驱动视频分镜（BobVideo）、MCP 协议桥接（AI Helper）、本地优先 AI 图像工作台（ImageHub）。',
     icon: 'devops',
   },
 ]

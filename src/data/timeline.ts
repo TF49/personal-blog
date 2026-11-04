@@ -1,8 +1,29 @@
 import type { TimelineEvent } from '@/types'
 
 export const timelineEvents: TimelineEvent[] = [
-  { year: '入学', title: '计算机相关专业', description: '系统学习计算机基础、数据结构与操作系统，为后续工程实践打下理论底座。' },
-  { year: '课程阶段', title: 'Java / C++ / Python', description: '完成多门课程设计与综合实验，独立完成后端接口、小工具脚本等，形成第一批可复用代码。' },
-  { year: '实践阶段', title: 'Linux 与部署', description: '在 CentOS 环境中搭建 Web 服务与数据库，完成从代码到上线的完整部署闭环，并尝试容器化。' },
-  { year: '当下', title: '全栈与运维', description: '围绕个人项目与博客持续迭代，梳理开发笔记、整理问题清单，向「能独立交付线上可用系统」的方向推进。' },
+  {
+    year: '入学',
+    title: '计算机科学专业',
+    description: '系统学习数据结构、操作系统、计算机网络、数据库等核心基础理论。',
+  },
+  {
+    year: '课程阶段',
+    title: 'Java / C++ / Python',
+    description: '多门课程综合实战，完成后端接口、小型脚本、图形界面等，形成第一批代码作品。',
+  },
+  {
+    year: '实训阶段',
+    title: 'Linux 部署 · 全栈实战',
+    description: '用 CentOS 搭建 Web 服务与数据库，从写代码到上线完整全栈流程，同步深入 Android 开发。',
+  },
+  {
+    year: '毕业课设',
+    title: '全栈 SaaS 系统',
+    description: '围绕多个完整项目（BMP、CMS、宿舍管理、外卖系统）构建前后端分离架构，积累商业级开发经验。',
+  },
+  {
+    year: '独立开发',
+    title: 'Go · Rust · AI 工具链',
+    description: '转型独立 SaaS 开发，主导 AI Helper（Tauri + Rust）、BobVideo（Python + LLM）、BobAPI 商业体系等多个产品，拓展 Go 高性能服务与 AI 工程化能力。',
+  },
 ]
