@@ -11,3 +11,6 @@ pnpm-debug.log*
 *.tsbuildinfo
 .env
 .env.*
+
+# 第三方参考站截图,仅本地使用,不提交
+docs/redesign/reference/
