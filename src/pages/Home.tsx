@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getRecentArticles } from '@/api'
 import type { Article } from '@/types'
@@ -11,6 +11,9 @@ import GhostHeading from '@/components/site/GhostHeading'
 import LetterAssembly from '@/components/site/LetterAssembly'
 import HeroFallback from '@/components/site/HeroFallback'
 import { profile } from '@/data/profile'
+
+// HeroScene 懒加载：Three.js 不进入主包
+const HeroScene = lazy(() => import('@/components/site/HeroScene'))
 
 export default function Home() {
   const [introDone, setIntroDone] = useState(false)
@@ -38,7 +41,14 @@ export default function Home() {
       {/* ========== 首屏 ========== */}
       <ToneSection tone="sage" as="section" aria-label="首屏">
         <SectionLabel label="HOME" index={1} className="site-wrap pt-20" />
-        <HeroFallback title={profile.title} subtitle={profile.name} />
+        {/* P4：HeroScene 懒加载；降级逻辑在 HeroScene 内部完成 */}
+        <Suspense
+          fallback={
+            <HeroFallback title={profile.title} subtitle={profile.name} />
+          }
+        >
+          <HeroScene title={profile.title} subtitle={profile.name} />
+        </Suspense>
       </ToneSection>
 
       {/* ========== 关于 ========== */}

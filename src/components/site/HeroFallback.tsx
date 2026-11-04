@@ -1,9 +1,11 @@
 /**
- * HeroFallback — 首屏静态占位（P3）
- * - P4 才接 Three.js 3D，当前为静态 sage 色背景 + 装饰元素
- * - 背景色由外层 ToneSection tone="sage" 提供
- * - 高度 100vh，顶部 64px 留给固定导航
- * - 右对齐、错行标语
+ * HeroFallback — 首屏静态占位
+ * - 满足降级条件时（移动端、reduced-motion、无 WebGL2、saveData、prerender）由 HeroScene 渲染此组件
+ * - 也作为 Suspense fallback 在 HeroScene 加载期间显示
+ * - 背景：有 hero-fallback.png 时使用 CSS background-image（3D 场景截图），
+ *         否则退回到 ToneSection 提供的 sage 底色
+ * - 高度 100vh，顶部留给固定导航
+ * - 右对齐、错行标语，墨色文字（contrast 11.17:1 on sage 背景）
  */
 interface HeroFallbackProps {
   title?: string
@@ -17,8 +19,21 @@ export default function HeroFallback({
   return (
     <div
       className="relative flex flex-col justify-end"
-      style={{ height: '100vh', paddingTop: 'var(--header-h)' }}
+      style={{
+        height: '100vh',
+        paddingTop: 'var(--header-h)',
+        backgroundImage: 'url(/hero-fallback.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
     >
+      {/* 轻微暗色遮罩，确保文字对比度 */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'rgba(194,202,187,0.15)' }}
+      />
+
       {/* 装饰：右上角网格点阵 */}
       <div
         aria-hidden="true"
@@ -37,7 +52,7 @@ export default function HeroFallback({
       />
 
       {/* 标语区：右对齐，错行 */}
-      <div className="site-wrap pb-20">
+      <div className="relative site-wrap pb-20">
         <div className="flex flex-col items-end text-right">
           {/* 大装饰行 */}
           <span
@@ -48,7 +63,7 @@ export default function HeroFallback({
             TF49
           </span>
 
-          {/* 主标题（错位：比大装饰行缩进） */}
+          {/* 主标题 */}
           <h1 className="text-h1 font-semibold text-fg leading-tight mt-2 max-w-xs md:max-w-md">
             {title}
           </h1>
