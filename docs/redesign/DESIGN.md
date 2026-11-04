@@ -1,7 +1,7 @@
 # 前端重构设计文档
 
-- 状态:**已确认(v1.2)**,实施中。**P0、P1、P2 已完成**,下一步 P3
-- 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录;v1.2 补充 P2 实施记录)
+- 状态:**已确认(v1.3)**,实施中。**P0、P1、P2、P3 已完成**,下一步 P4
+- 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录;v1.2 补充 P2 实施记录;v1.3 补充 P3 实施记录)
 - 范围:`personal-blog` 全站前端视觉与交互重构
 - 分支:`redesign/max-style`(已推送到 `origin`;`main` 未改动,线上站点不受影响)
 - 实施会话请直接跳到[第 15 节](#15-实施入口给新会话),已完成阶段的结果与偏差见[第 16 节](#16-实施记录)。
@@ -390,7 +390,7 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 | P0 准备 ✅ | 见 12.1 | 见 12.1 |
 | P1 基础 ✅ | 令牌与 Tailwind 映射、新 `Layout` / 导航 / 页脚、分区背景切换、路由切换 | 四个页面均能打开,导航可用,375/768/1440 无横向滚动条 |
 | P2 文章 ✅ | `PostIndex` + 筛选 + 悬停预览;`ArticleBody` 阅读版式;`cover` 字段与脚本改动 | 筛选可用;键盘聚焦可出预览;文章页 17px 正文,对比度达标;没有封面的文章显示排版卡片 |
-| P3 首页 | 加载页、首屏(先用静态回退图)、`LetterAssembly`、最新文章 | 加载页可跳过且每会话一次;关闭动画后首页内容完整 |
+| P3 首页 ✅ | 加载页、首屏(先用静态回退图)、`LetterAssembly`、最新文章 | 加载页可跳过且每会话一次;关闭动画后首页内容完整 |
 | P4 3D | `HeroScene` 懒加载 + 降级条件 + 从场景截图生成回退图 | 满足 7.2 任一降级条件时不请求 `three` 块;帧率与包体积有实测记录 |
 | P5 关于与收尾 | `About`(时间线、技术栈、精选仓库)、删除 8.3 节的文件、更新 README、a11y 与性能复查 | 无死代码引用;README 与实际路由、技术栈一致 |
 
@@ -577,4 +577,50 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 
 - `components/home/`(25 个文件)、`reactbits/`、`AmbientBackground.tsx`、`CustomCursor.tsx`、`utils/gsapAnimations.ts` 仍存在,按 8.3 节在 P5 删除。`Blog.tsx` / `BlogPost.tsx` 已不再引用这些文件,可安全保留到 P5。
 - `index.css` 里标注"旧设计样式"的类仍在,随 P3 / P5 旧页面重写时删除。
+- 移动端只做了无头 Chrome 测试,真机触摸和 iOS Safari 待 P5 验证。
+
+
+### 16.4 P3 首页(2026-11-04)
+
+提交:`feat(redesign): P3 首页加载页、首屏、关于与最新文章`
+
+**新建组件(`src/components/site/`)**
+
+| 组件 | 说明 |
+|---|---|
+| `IntroLoader.tsx` | Canvas 2D 字母环加载页。6 圈词表(`涂家乐 / TF49 / BLOG / NOTES / CODE / WRITING`),各圈淡入(stagger 0.12s)→ 计数 0→100(1.4s 线性)→ 淡出(0.8s)。GSAP 时间线控制 alpha 和计数值;Canvas `requestAnimationFrame` 循环绘制字母圆弧(呼吸弧长 `π + sin(t − offset) × 0.5`)。每会话一次(`sessionStorage["tf49:intro-seen"]`);点击 / Enter / Esc 可跳过;`prefers-reduced-motion` 或 `__PRERENDER_INJECTED` 时直接跳过;`aria-hidden="true"`,不阻塞 DOM |
+| `GhostHeading.tsx` | 幽灵大标题。`text-display` 字号,颜色 `--ghost`,`aria-hidden="true"`,`overflow-hidden`。ScrollTrigger `scrub: 1` 驱动奇偶行交替横向位移(±60px);reduced-motion 下静态显示 |
+| `LetterAssembly.tsx` | 字母聚拢。目标层(`<p>` 内每字一个 `<span data-char>`,初始 `opacity: 0`)+ 飞行层(`aria-hidden`,绝对定位)。ScrollTrigger `start: "50% 100%"` / `end: "50% -10%"` / `scrub: 1` 驱动 GSAP timeline;每个飞行字母沿三点路径(`curviness: 0.85`,控制点 ±90px / +160px)运动,间隔 0.025s;飞行字母在 `progress > 0.65` 淡出,目标字符同时淡入。手机(`< 768px`)和 reduced-motion 下整段淡入 |
+| `HeroFallback.tsx` | 首屏静态占位(P4 才接 3D)。背景色由外层 `ToneSection tone="sage"` 提供;右对齐错行标语(`text-display` 幽灵装饰行 + `text-h1` 主标题 + `text-body` 副标题);`radial-gradient` 点阵与圆圈装饰,均 `aria-hidden`;高度 `100vh`,顶部 `--header-h` 留给固定导航 |
+
+**修改**
+
+| 文件 | 变更 |
+|---|---|
+| `src/pages/Home.tsx` | 全量重写。移除旧 `components/home/`(25 个文件)、`framer-motion`、`lucide-react`、`reactbits`、`gsapAnimations`、`CustomCursor` 的全部引用。新结构:`IntroLoader`(加载页,首次访问) + `ToneSection tone="sage"` 首屏(`HeroFallback`) + `ToneSection tone="ink"` 关于(`GhostHeading` + `LetterAssembly`) + `ToneSection tone="ink"` 最新文章(`PostIndex`,取最近 6 篇)。保留 `prerender-ready` 事件派发(文章加载完成后) |
+| `docs/redesign/DESIGN.md` | 状态升至 v1.3;P3 标记 ✅;追加本节 |
+
+**验收(无头 Chrome 1440 / 768 / 375)**
+
+| 项 | 结果 |
+|---|---|
+| 加载页每会话一次 | 首次出现,刷新后跳过(`sessionStorage` 有值直接 `onDone`) |
+| 加载页可跳过 | 点击 / Enter / Esc 均可立即结束 |
+| reduced-motion | 加载页跳过,首页内容直接完整显示 |
+| 首屏 | sage 色背景,右对齐错行标语,幽灵装饰大字正常 |
+| 关于分区 | 幽灵大标题横向位移可见;字母聚拢段落正确渲染 |
+| 最新文章 | PostIndex 两列错落索引(1440),单列(375 / 768);悬停预览在 1440 正常 |
+| 无横向溢出 | 1440 / 768 / 375 均通过 |
+| 构建 | exit 0,7.26s;`Home.js` gzip 13.18 kB,主包 gzip 115 kB(无 Three.js) |
+
+**与原计划的偏差**
+
+1. **`HeroFallback` 无静态截图资源**:原计划\"从场景截图生成静态 WebP\",P3 改为纯 CSS 装饰占位。P4 接入 Three.js 场景后再从场景截图生成最终回退图,流程不变。
+2. **`LetterAssembly` 坐标时序**:飞行字母起点通过 `getBoundingClientRect` 在 `useEffect` 挂载时计算,若 DOM 尚未稳定可能轻微偏移。已通过手机和 reduced-motion 降级(整段淡入)规避主要场景。
+3. **`GhostHeading` 超小屏截断**:320px 以下大标题可能被 `overflow-hidden` 截断,设计目标断点最小为 375px,不影响验收。
+
+**已知遗留(按计划在后续阶段处理)**
+
+- `components/home/`(25 个文件)、`reactbits/`、`AmbientBackground.tsx`、`CustomCursor.tsx`、`utils/gsapAnimations.ts` 仍在,`Home.tsx` 已不再引用,按 8.3 节在 P5 删除。
+- `index.css` 里标注\"旧设计样式\"的类仍在,随 P5 旧页面重写时一并删除。
 - 移动端只做了无头 Chrome 测试,真机触摸和 iOS Safari 待 P5 验证。
