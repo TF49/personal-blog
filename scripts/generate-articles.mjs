@@ -68,6 +68,12 @@ async function ghFetchJson(url, { token } = {}) {
     )
   }
   if (!res.ok) {
+    // 如果带了 token 却收到 401（Bad credentials/Unauthorized），说明 token 已失效或无权限，对公开仓库尝试匿名重新请求
+    if (res.status === 401 && token) {
+      console.warn(`[WARN] GitHub API 401 with provided token. Retrying anonymously for public repository: ${url}`)
+      return ghFetchJson(url, { token: undefined })
+    }
+
     let detail = ''
     try {
       const body = await res.text()
@@ -118,7 +124,19 @@ async function main() {
     breaks: true,
   })
 
-  const issues = await listIssues({ owner, repo, label, token })
+  let issues
+  try {
+    issues = await listIssues({ owner, repo, label, token })
+  } catch (fetchErr) {
+    const outPath = path.join(process.cwd(), OUTPUT_PUBLIC_FILE)
+    try {
+      await fs.access(outPath)
+      console.warn(`[WARN] Failed to fetch articles from GitHub (${fetchErr.message}). Falling back to existing ${OUTPUT_PUBLIC_FILE}`)
+      return
+    } catch {
+      throw fetchErr
+    }
+  }
   const articles = issues
     .filter((it) => !it.pull_request) // exclude PRs
     .map((it) => {
