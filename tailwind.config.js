@@ -1,4 +1,14 @@
 /** @type {import('tailwindcss').Config} */
+
+// 线性流体字号:手机 375px 取 min,桌面 1440px 取 max(DESIGN.md 5.2)
+const fluid = (min, max) => {
+  const slope = (max - min) / (1440 - 375)
+  const intercept = min - slope * 375
+  return `clamp(${min}px, ${intercept.toFixed(2)}px + ${(slope * 100).toFixed(3)}vw, ${max}px)`
+}
+
+const sansStack = ['"Inter Tight Variable"', '"Noto Sans SC Variable"', 'system-ui', '-apple-system', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif']
+
 export default {
   content: [
     "./index.html",
@@ -7,37 +17,45 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Noto Sans SC"', 'system-ui', 'sans-serif'],
-        display: ['"Bebas Neue"', '"Noto Sans SC"', 'sans-serif'],
+        sans: sansStack,
+        // 旧页面仍在用 font-display,先指向新字体;P5 随旧页面一起移除
+        display: sansStack,
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
+      },
+      fontSize: {
+        display: [fluid(72, 160), { lineHeight: '0.95' }],
+        h1: [fluid(36, 56), { lineHeight: '1.1' }],
+        h2: [fluid(24, 32), { lineHeight: '1.2' }],
+        'body-lg': ['17px', { lineHeight: '1.85' }],
+        body: ['15px', { lineHeight: '1.7' }],
+        label: ['13px', { lineHeight: '1.4', letterSpacing: '0.02em' }],
       },
       colors: {
-        primary: 'var(--color-primary)',
-        surface: 'var(--color-surface)',
-        muted: 'var(--color-muted)',
+        // 两种基础色,支持透明度修饰(如 bg-ink/40)
+        sage: 'rgb(var(--sage-rgb) / <alpha-value>)',
+        ink: 'rgb(var(--ink-rgb) / <alpha-value>)',
+        // 与 :root 令牌同名的语义色
+        'on-sage': 'var(--on-sage)',
+        'on-ink': 'var(--on-ink)',
+        'on-sage-muted': 'var(--on-sage-muted)',
+        'on-ink-muted': 'var(--on-ink-muted)',
+        'line-sage': 'var(--line-sage)',
+        'line-ink': 'var(--line-ink)',
+        ghost: 'var(--ghost)',
+        // 随所在分区(.tone-sage / .tone-ink)自动切换的语义色
+        surface: 'var(--surface)',
+        fg: 'var(--fg)',
+        'fg-muted': 'var(--fg-muted)',
+        line: 'var(--line)',
       },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(32px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-8px)' },
-        },
-        scaleIn: {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
+      maxWidth: {
+        content: '1230px',
+        article: '720px',
+        timeline: '670px',
       },
-      animation: {
-        'fade-in': 'fadeIn 0.8s ease-out forwards',
-        'slide-up': 'slideUp 0.7s ease-out forwards',
-        'float': 'float 2.5s ease-in-out infinite',
-        'scale-in': 'scaleIn 0.6s ease-out forwards',
+      borderRadius: {
+        pill: '999px',
+        img: '4px',
       },
     },
   },

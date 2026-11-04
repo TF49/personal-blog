@@ -10,11 +10,8 @@ const About = lazy(() => import('@/pages/About'))
 
 function RouteFallback() {
   return (
-    <div className="section-padding text-center text-[var(--color-muted)] bg-white min-h-screen flex items-center justify-center font-display uppercase tracking-widest text-xs">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
-        正在加载页面...
-      </div>
+    <div className="flex min-h-screen items-center justify-center text-label text-fg-muted" role="status">
+      正在加载页面…
     </div>
   )
 }
@@ -22,16 +19,18 @@ function RouteFallback() {
 function App() {
   return (
     <Layout>
-      <Suspense fallback={<RouteFallback />}>
-        <PageTransition>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/about" element={<About />} />
-          </Routes>
-        </PageTransition>
-      </Suspense>
+      <PageTransition>
+        {(location) => (
+          <Suspense fallback={<RouteFallback />}>
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/about" element={<About />} />
+            </Routes>
+          </Suspense>
+        )}
+      </PageTransition>
     </Layout>
   )
 }

@@ -1,97 +1,76 @@
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Github, Twitter, Linkedin, Mail } from 'lucide-react'
-import { Magnet, ShinyText } from '@/components/reactbits'
+import { ArrowRightIcon, ArrowUpRightIcon, EnvelopeSimpleIcon, GithubLogoIcon } from '@phosphor-icons/react'
+import { profile } from '@/data/profile'
+import { useLenis } from '@/components/effects/SmoothScroll'
+import { prefersReducedMotion } from '@/hooks/useReducedMotion'
+import ToneSection from '@/components/site/ToneSection'
+import SectionLabel from '@/components/site/SectionLabel'
+import { ICON_MD, ICON_SM } from '@/components/site/icon'
+
+// 只展示已配置真实地址的社交链接
+const socialLinks = profile.social.filter((s) => s.url && s.url !== '#')
 
 export default function Footer() {
-  return (
-    <footer className="bg-black text-white pt-32 pb-12 border-t border-white/[0.08] relative overflow-hidden">
-      {/* Subtle ambient background glow */}
-      <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-white/[0.02] to-transparent pointer-events-none" />
-      
-      <div className="container-wide px-6 lg:px-12 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-20 mb-20">
-          <div className="lg:col-span-2">
-            <Link to="/" className="font-display text-3xl tracking-tight mb-6 block group text-white">
-              <ShinyText text="涂家乐" speed={5} /> <span className="text-white/40 font-light ml-1">Blog</span>
-            </Link>
-            <p className="text-white/40 text-sm max-w-sm font-light leading-relaxed mb-8">
-              致力于打造极简、优雅且高品质的技术沉淀与博客空间。记录全栈开发、Linux 运维实践与思考。
-            </p>
-            <div className="flex gap-3">
-              {[
-                { Icon: Github, name: 'Github' },
-                { Icon: Twitter, name: 'Twitter' },
-                { Icon: Linkedin, name: 'Linkedin' },
-                { Icon: Mail, name: 'Mail' }
-              ].map(({ Icon, name }, idx) => (
-                <Magnet key={idx} strength={0.3}>
-                  <a 
-                    href="#" 
-                    aria-label={name}
-                    className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all duration-300 group block"
-                  >
-                    <Icon size={16} className="text-white/60 group-hover:text-white transition-colors" />
-                  </a>
-                </Magnet>
-              ))}
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="text-xs font-semibold text-white/80 tracking-wide mb-6">快速导航</h4>
-            <ul className="space-y-4">
-              {[
-                { label: '首页', to: '/' },
-                { label: '博客文章', to: '/blog' },
-                { label: '关于作者', to: '/about' },
-                { label: '技术项目', to: '/blog' },
-                { label: '隐私政策', to: '#' }
-              ].map((item) => (
-                <li key={item.label}>
-                  <Link to={item.to} className="text-white/55 hover:text-white transition-colors text-xs font-normal block transition-transform duration-200">
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+  const lenis = useLenis()
 
-          <div>
-            <h4 className="text-xs font-semibold text-white/80 tracking-wide mb-6">核心矩阵</h4>
-            <ul className="space-y-4">
-              {['React 生态', 'Spring 架构', '云原生部署', '全链路安全', '性能调优'].map((item) => (
-                <li key={item} className="text-white/55 text-xs font-normal flex items-center gap-3 group cursor-default">
-                  <div className="w-1 h-1 bg-white/20 rounded-full group-hover:bg-white transition-colors" />
-                  <span className="group-hover:text-white transition-colors">{item}</span>
+  const backToTop = () => {
+    const reduced = prefersReducedMotion()
+    if (lenis) lenis.scrollTo(0, { immediate: reduced })
+    else window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' })
+    // 焦点回到页首,避免键盘用户停留在页脚
+    document.getElementById('site-home-link')?.focus({ preventScroll: true })
+  }
+
+  return (
+    <ToneSection as="footer" tone="sage" id="site-footer" aria-labelledby="footer-heading">
+      <div className="site-wrap pb-12 pt-24 md:pt-32">
+        <SectionLabel label="CONTACT" align="center" />
+        <h2 id="footer-heading" className="sr-only">
+          联系方式
+        </h2>
+
+        <div className="mt-12 flex flex-col items-center gap-8 text-center md:mt-16">
+          <p className="text-body text-fg-muted">有想法、合作或问题,欢迎来信。</p>
+          <a
+            href={`mailto:${profile.email}`}
+            className="group inline-flex min-h-[44px] max-w-full items-center gap-3 break-all text-h2 font-medium underline decoration-1 decoration-transparent underline-offset-[10px] transition-[text-decoration-color] duration-200 hover:decoration-current"
+          >
+            <EnvelopeSimpleIcon {...ICON_MD} aria-hidden className="shrink-0" />
+            {profile.email}
+          </a>
+
+          {socialLinks.length > 0 && (
+            <ul className="flex flex-wrap items-center justify-center gap-3">
+              {socialLinks.map((s) => (
+                <li key={s.name}>
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-pill border border-current px-5 text-label transition-colors duration-200 hover:bg-ink hover:text-sage"
+                  >
+                    {s.name === 'GitHub' && <GithubLogoIcon {...ICON_SM} aria-hidden />}
+                    {s.name}
+                    <ArrowUpRightIcon {...ICON_SM} aria-hidden />
+                    <span className="sr-only">(在新标签页打开)</span>
+                  </a>
                 </li>
               ))}
             </ul>
-          </div>
+          )}
         </div>
 
-        <div className="pt-8 border-t border-white/[0.08] flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <p className="text-white/30 text-xs font-normal">
-              © {new Date().getFullYear()} 涂家乐 Blog. 保留所有权利。
-            </p>
-            <div className="h-3 w-px bg-white/10 hidden md:block" />
-            <div className="flex gap-6 text-white/30 text-xs font-normal">
-              <a href="#" className="hover:text-white transition-colors">Cookie 政策</a>
-              <a href="#" className="hover:text-white transition-colors">服务条款</a>
-            </div>
-          </div>
-          
-          <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className="flex items-center gap-2.5 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full backdrop-blur-md"
+        <div className="mt-24 flex flex-col-reverse items-center justify-between gap-4 border-t border-line pt-6 text-label md:mt-32 md:flex-row">
+          <p className="text-fg-muted">© {new Date().getFullYear()} {profile.name}</p>
+          <button
+            type="button"
+            onClick={backToTop}
+            className="inline-flex min-h-[44px] items-center gap-2 px-2 underline decoration-1 decoration-transparent underline-offset-[6px] transition-[text-decoration-color] duration-200 hover:decoration-current"
           >
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-[10px] font-normal text-white/60">系统运行正常</span>
-          </motion.div>
+            返回顶部
+            <ArrowRightIcon {...ICON_SM} aria-hidden className="-rotate-90" />
+          </button>
         </div>
       </div>
-    </footer>
+    </ToneSection>
   )
 }
-

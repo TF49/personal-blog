@@ -2,12 +2,33 @@
 @import '@fontsource-variable/inter-tight';
 @import '@fontsource-variable/noto-sans-sc';
 @import '@fontsource/jetbrains-mono';
+@import 'lenis/dist/lenis.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 苹果极简美学风格：深邃黑与铝灰主色、精密排版、流光溢彩的毛玻璃效果 */
+/* ===== 设计令牌(DESIGN.md 5.1)=====
+   只有鼠尾草绿与墨色两种色相;混合色按"前景色以 N% 不透明度叠在背景上"预先算成实色,
+   对比度:on-sage-muted 5.43:1,on-ink-muted 5.95:1(WCAG 相对亮度公式) */
+:root {
+  --sage-rgb: 194 202 187; /* #C2CABB */
+  --ink-rgb: 16 18 15;     /* #10120F */
+  --sage: rgb(var(--sage-rgb));
+  --ink: rgb(var(--ink-rgb));
+  --on-sage: var(--ink);
+  --on-ink: var(--sage);
+  --on-sage-muted: #454943; /* ink 70% / sage */
+  --on-ink-muted: #8d9387;  /* sage 70% / ink */
+  --line-sage: #979e92;     /* ink 24% / sage */
+  --line-ink: #42463f;      /* sage 28% / ink */
+  --ghost: #1a1b19;         /* 白 4% / ink,仅装饰 */
+
+  --gutter: clamp(20px, 7.3vw, 105px);
+  --header-h: 64px;
+}
+
+/* ===== 旧设计变量,P2–P5 随旧页面重写删除 ===== */
 :root {
   --color-primary: #0071e3; /* Apple Blue */
   --color-primary-dark: #005bb5;
@@ -30,26 +51,84 @@
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
   html,
   body,
   #root {
     min-height: 100%;
   }
+  /* body 默认是黑底分区;各分区用 .tone-* 覆盖 */
   body {
+    --surface: var(--ink);
+    --fg: var(--on-ink);
+    --fg-muted: var(--on-ink-muted);
+    --line: var(--line-ink);
+    background-color: var(--surface);
+    color: var(--fg);
+    font-family: theme('fontFamily.sans');
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: var(--color-text);
-    background-color: var(--color-black);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  /* 聚焦环 2px,用当前文字色 = 当前背景的反色 */
+  :focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
   }
 }
 
 @layer components {
+  /* 分区色调:背景硬切换,无渐变 */
+  .tone-sage {
+    --surface: var(--sage);
+    --fg: var(--on-sage);
+    --fg-muted: var(--on-sage-muted);
+    --line: var(--line-sage);
+    background-color: var(--surface);
+    color: var(--fg);
+  }
+  .tone-ink {
+    --surface: var(--ink);
+    --fg: var(--on-ink);
+    --fg-muted: var(--on-ink-muted);
+    --line: var(--line-ink);
+    background-color: var(--surface);
+    color: var(--fg);
+  }
+
+  /* 内容宽 1230px,1440 视口下两侧各 105px */
+  .site-wrap {
+    width: 100%;
+    max-width: calc(1230px + var(--gutter) * 2);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .skip-link {
+    position: fixed;
+    left: var(--gutter);
+    top: 8px;
+    z-index: 100;
+    padding: 12px 16px;
+    background-color: var(--sage);
+    color: var(--ink);
+    font-size: 13px;
+    transform: translateY(-200%);
+  }
+  .skip-link:focus-visible {
+    transform: none;
+    outline-color: var(--ink);
+  }
+
+  .menu-enter {
+    animation: menu-enter 200ms ease-out both;
+  }
+  @keyframes menu-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* ===== 以下为旧设计样式,P2–P5 随旧页面重写删除 ===== */
   .font-display {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: theme('fontFamily.sans');
     font-weight: 700;
     letter-spacing: -0.022em;
     line-height: 1.1;
@@ -57,7 +136,7 @@
   
   /* Apple typography - clean and robust */
   .font-kinetic-huge {
-    font-family: 'Inter', sans-serif;
+    font-family: theme('fontFamily.sans');
     font-weight: 800;
     font-size: clamp(2.5rem, 7vw, 7.5rem);
     letter-spacing: -0.03em;
@@ -66,7 +145,7 @@
   }
   
   .font-kinetic-large {
-    font-family: 'Inter', sans-serif;
+    font-family: theme('fontFamily.sans');
     font-weight: 700;
     font-size: clamp(1.75rem, 3.5vw, 4rem);
     letter-spacing: -0.025em;
@@ -75,7 +154,7 @@
   }
   
   .font-kinetic-medium {
-    font-family: 'Inter', sans-serif;
+    font-family: theme('fontFamily.sans');
     font-weight: 600;
     font-size: clamp(1.25rem, 2.5vw, 2.25rem);
     letter-spacing: -0.02em;
@@ -423,12 +502,6 @@
   .faq-accordion-item.active .faq-accordion-content {
     max-height: 1000px;
     transition: max-height 1s ease-in-out;
-  }
-
-  a:focus-visible,
-  button:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-black);
   }
 
   /* Performance optimizations for animations */
