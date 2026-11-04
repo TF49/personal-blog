@@ -1,4 +1,4 @@
-# 前端重构设计文档
+﻿# 前端重构设计文档
 
 - 状态:**已确认(v1.3)**,实施中。**P0、P1、P2、P3 已完成**,下一步 P4
 - 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录;v1.2 补充 P2 实施记录;v1.3 补充 P3 实施记录)
@@ -447,8 +447,8 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 ### 开始前
 
 1. 通读第 2、5、6、12、16 节,以及 8.2 节末尾的"新页面必须遵守的约定"。
-2. P0、P1、P2 已完成。确认当前分支是 `redesign/max-style`,并且 `git status` 干净,然后从 **P3** 开始,每阶段结束时汇报结果。
-3. 动手前先读,不要凭印象改:`src/App.tsx`、`src/components/Layout.tsx`、`src/components/site/`、`src/components/effects/SmoothScroll.tsx`、`src/api/index.ts`、`src/api/github.ts`、`scripts/generate-articles.mjs`、`vite.config.ts`、`index.html`。
+2. P0、P1、P2、P3 已完成。确认当前分支是 `redesign/max-style`,并且 `git status` 干净,然后从 **P4** 开始,每阶段结束时汇报结果。
+3. 动手前先读,不要凭印象改:`src/App.tsx`、`src/components/Layout.tsx`、`src/components/site/`(含 `IntroLoader`、`GhostHeading`、`LetterAssembly`、`HeroFallback`)、`src/components/effects/SmoothScroll.tsx`、`src/pages/Home.tsx`、`src/api/index.ts`、`src/api/github.ts`、`scripts/generate-articles.mjs`、`vite.config.ts`、`index.html`。
 
 ### 约束
 
@@ -486,7 +486,7 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 
 ### 建议的开场提示词
 
-> 请阅读 `docs/redesign/DESIGN.md`(重点看第 8.2、12.2、15、16 节),在 `redesign/max-style` 分支上执行 P3。完成后汇报验收结果和截图,等我确认后再提交。
+> 请阅读 `docs/redesign/DESIGN.md`(重点看第 7、8.2、12.2、15、16 节),在 `redesign/max-style` 分支上执行 P4。完成后汇报验收结果和截图,等我确认后再提交。
 
 ## 16. 实施记录
 
@@ -528,7 +528,7 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 
 **已知遗留(按计划在后续阶段处理)**
 
-- 四个页面的正文仍是旧设计,依赖 `index.css` 里标注"旧设计样式"的类、`--color-*` 变量,以及 Tailwind 的 `font-display` 别名。它们在 P2、P3、P5 重写页面时一并删除。
+- 四个页面的正文仍是旧设计,依赖 `index.css` 里标注"旧设计样式"的类、`--color-*` 变量,以及 Tailwind 的 `font-display` 别名。P2 / P3 重写对应页面时已移除各自的旧引用,最后剩余的类随 P5 一并删除。
 - `AmbientBackground.tsx`、`CustomCursor.tsx`、`reactbits/`、`components/home/`、`utils/gsapAnimations.ts` 仍在,按 8.3 节在 P5 删除。`Toast.tsx` 仍引用 `lucide-react`。
 - 手机端只做了无头 Chrome 测试,真机的触摸滚动和 iOS Safari 表现尚未验证。
 
@@ -575,8 +575,8 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 
 **已知遗留(按计划在后续阶段处理)**
 
-- `components/home/`(25 个文件)、`reactbits/`、`AmbientBackground.tsx`、`CustomCursor.tsx`、`utils/gsapAnimations.ts` 仍存在,按 8.3 节在 P5 删除。`Blog.tsx` / `BlogPost.tsx` 已不再引用这些文件,可安全保留到 P5。
-- `index.css` 里标注"旧设计样式"的类仍在,随 P3 / P5 旧页面重写时删除。
+- `components/home/`(25 个文件)、`reactbits/`、`AmbientBackground.tsx`、`CustomCursor.tsx`、`utils/gsapAnimations.ts` 仍存在,按 8.3 节在 P5 删除。`Blog.tsx` / `BlogPost.tsx` / `Home.tsx` 已不再引用这些文件,可安全保留到 P5。
+- `index.css` 里标注"旧设计样式"的类仍在,随 P5 旧页面重写时删除。
 - 移动端只做了无头 Chrome 测试,真机触摸和 iOS Safari 待 P5 验证。
 
 
@@ -598,7 +598,7 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 | 文件 | 变更 |
 |---|---|
 | `src/pages/Home.tsx` | 全量重写。移除旧 `components/home/`(25 个文件)、`framer-motion`、`lucide-react`、`reactbits`、`gsapAnimations`、`CustomCursor` 的全部引用。新结构:`IntroLoader`(加载页,首次访问) + `ToneSection tone="sage"` 首屏(`HeroFallback`) + `ToneSection tone="ink"` 关于(`GhostHeading` + `LetterAssembly`) + `ToneSection tone="ink"` 最新文章(`PostIndex`,取最近 6 篇)。保留 `prerender-ready` 事件派发(文章加载完成后) |
-| `docs/redesign/DESIGN.md` | 状态升至 v1.3;P3 标记 ✅;追加本节 |
+| `docs/redesign/DESIGN.md` | 状态升至 v1.3;P3 标记 ✅;追加本节(16.4);修正 P1/P2 遗留说明中的阶段引用;第 15 节开场提示词与开始前说明更新至 P4 |
 
 **验收(无头 Chrome 1440 / 768 / 375)**
 
