@@ -1,10 +1,11 @@
 # 前端重构设计文档
 
-- 状态:**已确认(v1.0)**,可以实施
-- 日期:2026-11-04
+- 状态:**已确认(v1.1)**,实施中。**P0、P1 已完成**,下一步 P2
+- 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录)
 - 范围:`personal-blog` 全站前端视觉与交互重构
-- 实施会话请直接跳到[第 15 节](#15-实施入口给新会话),再回头按需查阅其余章节。
-- 本文档本身不包含任何代码改动。"已核实"均指对项目文件、参考站截图和运行状态的实际读取。
+- 分支:`redesign/max-style`(已推送到 `origin`;`main` 未改动,线上站点不受影响)
+- 实施会话请直接跳到[第 15 节](#15-实施入口给新会话),已完成阶段的结果与偏差见[第 16 节](#16-实施记录)。
+- "已核实"均指对项目文件、参考站截图和运行状态的实际读取。
 
 ## 1. 目标与非目标
 
@@ -29,14 +30,14 @@
 | 框架 | React 18.3.1 + Vite 5 + TypeScript + Tailwind 3.4 |
 | 路由 | `react-router-dom` 6,`BrowserRouter`,`basename={import.meta.env.BASE_URL}`。路由:`/`、`/blog`、`/blog/:slug`、`/about`。README 写的是 `HashRouter`,与代码不符,收尾时更正 |
 | 布局 | `Layout` = `ToastProvider` + `SmoothScroll`(Lenis + GSAP ticker)+ `AmbientBackground` + `Header` + `Footer` |
-| 现有视觉 | 深色 + 靛蓝(`--color-primary: #6366f1`),Inter 字体,首页由 `components/home/` 下 25 个分区组成 |
+| 现有视觉 | 已提交版本(`main`)为深色 + 苹果蓝(`--color-primary: #0071e3`),Inter 字体,首页由 `components/home/` 下 25 个分区组成。v1.0 写的"靛蓝 `#6366f1`"是未提交的旧设计改动里的值,该改动已在 P1 后丢弃 |
 | 代码规模 | `src/` 共 68 个文件;`utils/gsapAnimations.ts` 661 行;`index.css` 591 行 |
 | 已装动效依赖 | `gsap 3.15.0`(含 `ScrollTrigger`、`SplitText`、`MotionPathPlugin`,已在 `node_modules` 确认)、`@gsap/react`、`lenis 1.3.26`、`framer-motion` |
 | 文章数据 | `Article { id, title, slug, summary, content(HTML), category, date, readCount? }`,没有封面字段。`articles.json` 目前 5 篇,分类为"未分类"(3)和"开发笔记"(2)。`readCount` 实际是 **Issue 评论数**(`generate-articles.mjs` 里有注释),不是阅读数 |
 | 预渲染 | `vite-plugin-prerender` 仅在 `ENABLE_PRERENDER=true` 时启用;`deploy.yml` 没有设置它。各页面会派发 `prerender-ready` 事件,`api/github.ts` 读取 `__PRERENDER_INJECTED` |
 | SEO 文件 | `public/sitemap.xml`、`robots.txt` 由 `npm run build` 的 `prebuild` 生成。未设置 `SITE_URL` 时会写入 `http://localhost/`,工作区里那份 `sitemap.xml` 的改动就是这样来的,CI 会重新生成 |
-| 字体 | `index.html` 通过 Google Fonts 在线加载 Bebas Neue、Inter、JetBrains Mono、Noto Sans SC |
-| Git | 分支 `main`,工作区有 20 项未提交改动(19 项旧设计文件的修改 + 未跟踪的 `src/components/CommandPalette.tsx`)。**已决定不保留**,处理步骤见 12.1 |
+| 字体 | 重构前:`index.html` 从 Google Fonts 加载 Bebas Neue、Noto Sans SC,`index.css` 里另有一条 `@import` 加载 Inter;JetBrains Mono 实际没有加载。**P0 已全部改为 fontsource 自托管** |
+| Git | 重构前:分支 `main`,工作区有 20 项未提交改动(19 项旧设计文件的修改 + 未跟踪的 `src/components/CommandPalette.tsx`)。P0 收进 stash,**P1 验收后已 `git stash drop`,不可恢复** |
 
 ## 3. 参考与取舍
 
@@ -119,6 +120,10 @@
 
 除上表外不引入第三种色相。强调用"反色":绿底上用墨色填充,黑底上用鼠尾草绿填充。
 
+实现(P1,`src/index.css`):混合色预先算成实色,不依赖 `color-mix()`:`--on-sage-muted #454943`、`--on-ink-muted #8D9387`、`--line-sage #979E92`、`--line-ink #42463F`、`--ghost #1A1B19`。`--sage` / `--ink` 另有 `-rgb` 通道变量,Tailwind 的 `sage` / `ink` 支持透明度修饰(如 `bg-ink/40`)。
+
+分区语义色:`.tone-sage` / `.tone-ink` 设置 `--surface`、`--fg`、`--fg-muted`、`--line` 四个变量,Tailwind 映射为 `bg-surface`、`text-fg`、`text-fg-muted`、`border-line`。组件内用这四个即可,不必区分自己在哪种底色上。`body` 默认等同 `.tone-ink`。
+
 #### 对比度(脚本计算,WCAG 相对亮度公式)
 
 | 前景 / 背景 | 对比度 | 用途 |
@@ -130,6 +135,9 @@
 | 墨色 60% / 鼠尾草绿 | 4.07:1 | **不达标**,禁止使用 |
 | 白 / 鼠尾草绿 | 1.69:1 | **不达标**,禁止使用 |
 | `--ghost` / 墨色 | 1.09:1 | 刻意极低,仅限装饰且 `aria-hidden` |
+| 墨色 40% / 鼠尾草绿 | 2.39:1 | 列表悬停时"其余项降到 40%"的实际对比度,仅作为非当前项的视觉弱化,不承载必须读到的信息 |
+
+P1 用实色复算:两项次要文字为 5.43:1 与 5.95:1(上表 5.45 / 5.97 为不同取整方式),均达标。
 
 ### 5.2 字体
 
@@ -163,6 +171,9 @@
 - 文章正文栏宽 720px。
 - 圆角:药丸 `999px`,图片 `4px`,其余不加圆角。
 - 图标统一使用 Phosphor(`@phosphor-icons/react`),线性,描边 1.5px。需要的图标不超过 6 个:ArrowUpRight、ArrowRight、List、X、GithubLogo、EnvelopeSimple。
+  - 2.1.10 版里不带后缀的导出名已标记弃用,一律用 `ListIcon`、`XIcon`、`ArrowRightIcon` 等带 `Icon` 后缀的名字。
+  - 尺寸令牌在 `src/components/site/icon.ts`:`ICON_MD`(24px + `regular`)与 `ICON_SM`(16px + `bold`),两者实际描边都是 1.5px。不要直接写 `size` / `weight`。
+- Tailwind 已映射:字号 `text-display / h1 / h2 / body-lg / body / label`(手机 375 到桌面 1440 线性缩放)、`max-w-content / article / timeline`、`rounded-pill / img`、布局容器 `.site-wrap`(1230px + 两侧 `--gutter`)。断点沿用 Tailwind 默认,`md` = 768、`lg` = 1024。
 
 ### 5.4 响应断点
 
@@ -179,14 +190,14 @@
 
 | 名称 | 触发 | 实现 | 参数 | 降级 |
 |---|---|---|---|---|
-| 平滑滚动 | 全站 | 沿用现有 Lenis + GSAP ticker | `duration 1.2`(沿用) | reduced-motion 下关闭 `smoothWheel` |
+| 平滑滚动 | 全站 | 沿用现有 Lenis + GSAP ticker;`useLenis()` 取实例 | `duration 1.2`(沿用) | reduced-motion 下关闭 `smoothWheel` |
 | 加载页 | 本会话首次进入 `/` | Canvas 2D 绘制字母环 + GSAP 时间线 | 见 6.1 | reduced-motion、预渲染、深链进入文章页时不播放 |
 | 首屏标语 | 加载页结束后 | `SplitText` 按行,位移 + 透明度 | 每行 stagger 0.08s,0.6s | 直接显示 |
-| 分区背景切换 | 滚动 | ScrollTrigger 切换分区 class,背景色硬边切换 | 无渐变 | 同左 |
+| 分区背景切换 | 滚动 | 分区用 `ToneSection` 声明底色;每个分区建一个 ScrollTrigger,分区越过导航中线(距顶 32px)时导航切到同色调 | 无渐变 | 同左 |
 | 幽灵大标题 | 滚动进入关于分区 | ScrollTrigger scrub,按行横向位移 | `scrub: 1` | 静态显示 |
 | 字母聚拢 | 滚动关于分区 | GSAP + `MotionPathPlugin` + ScrollTrigger scrub | 见 6.2 | 手机和 reduced-motion 改为整段淡入 |
 | 列表悬停预览 | 鼠标悬停 / 键盘聚焦 | React 状态 + CSS transition | 预览淡入 200ms,其余项降到 40% | 触屏无预览,点击直接跳转 |
-| 路由切换 | 路由变化 | 保留现有 `PageTransition`,改为 300ms 交叉淡入;切换后 Lenis 回到顶部 | — | 无动画 |
+| 路由切换 | 路径变化 | `PageTransition` 先淡出旧页面再淡入新页面(不是两页叠放的交叉淡入);切换后 Lenis 回到顶部,焦点移到 `#main-content`;只改 search / hash 时不转场 | 淡出 120ms + 淡入 180ms | 直接切换 |
 
 ### 6.1 加载页
 
@@ -256,16 +267,29 @@
 | `Timeline` | 居中窄栏时间线 |
 | `RepoList` | 关于页的 GitHub 精选仓库 |
 | `useReducedMotion` | 统一读取 `prefers-reduced-motion` 的 hook |
+| `ToneSection` | P1 新增(原清单没有):带底色的分区,并向导航报告底色 |
+
+**P1 已完成:**`SiteHeader`、`SiteNav`、`SectionLabel`、`ToneSection` 在 `src/components/site/`,同目录还有 `tone.ts`(导航底色状态)和 `icon.ts`(图标令牌);`useReducedMotion` 在 `src/hooks/`。`SectionLabel` 的 `align="center"` 用于只有标签、没有编号的场景,如页脚。
 
 ### 8.2 改造
 
 `Layout`(移除 `AmbientBackground`)、`SmoothScroll`(增加 reduced-motion 分支)、`PageTransition`、`Footer`、`SEO`、`Home` / `Blog` / `BlogPost` / `About` 四个页面。
 
+**P1 已完成:**`Layout`、`SmoothScroll`、`PageTransition`、`Footer`、`App.tsx`(`Suspense` 移进 `PageTransition` 内部)。旧的 `Header.tsx` 已被 `SiteHeader` 取代,并在 P1 删除。
+
+**新页面必须遵守的约定(P1 定下):**
+
+- 页面的每个分区用 `<ToneSection tone="sage|ink">` 包裹,导航才会跟着切换底色。不包的区域,导航按默认的黑底显示。
+- 页面顶部要留出 64px 导航高度。导航是 `fixed` 的,不占文档流。
+- 页面加载完成后继续派发 `prerender-ready`。
+- 颜色只用 5.1 节的令牌和 `fg` / `fg-muted` / `line` / `surface`,不写十六进制色值。
+
 ### 8.3 删除(已确认,在 P5 执行)
 
 - `components/home/` 全部 25 个文件
 - `components/reactbits/`、`components/effects/AmbientBackground.tsx`、`components/CustomCursor.tsx`
-- `components/CommandPalette.tsx`(未跟踪文件,P0 的 stash 已一并收走;如被 `Header.tsx` 引用,随 `Header` 重写一并消失)
+- ~~`components/CommandPalette.tsx`~~:已随 stash 丢弃,工作区里不存在,无需处理
+- ~~`components/Header.tsx`~~:P1 已删除
 - `utils/gsapAnimations.ts`(661 行,由少量新的动效辅助函数取代)
 - `data/highlights.ts`、`data/stats.ts`(首页不再使用)
 - 依赖:`framer-motion`、`lucide-react`(仅当代码里不再引用)
@@ -317,6 +341,7 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 - 核心网页指标"良好"阈值:LCP ≤ 2.5s、CLS ≤ 0.1、INP ≤ 200ms。
 - 首屏主包不含 `three`;`three` 与场景代码单独成块,仅在满足 7.2 条件时加载。
 - 字体按 unicode-range 分片,`font-display: swap`。
+- **P5 待决:中文字体声明是否拆出主 CSS。** P0 引入 Noto Sans SC 后,入口 CSS 的 gzip 体积从 10.3 kB 涨到 62.9 kB,多出的是 101 条 `@font-face` 声明,字体文件本身仍按字符区块按需下载。P1 评估后没有拆:站点是客户端渲染,正文本来就要等主 JS(gzip 115 kB)执行完才出现,CSS 和 JS 是并行下载的;拆成 JS 动态加载反而会推迟中文字体开始下载的时间。等 P5 有真机 LCP 数据后再决定。
 - 图片:WebP,明确宽高,首屏以外 `loading="lazy"`。
 
 ### 无障碍
@@ -338,9 +363,9 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 
 每个阶段都应能独立通过 `npm run build`(即 `tsc -b && vite build`)并可部署。每个阶段完成后单独提交。
 
-### 12.1 P0 准备(含 git 操作,逐步执行)
+### 12.1 P0 准备(含 git 操作,逐步执行)— ✅ 已完成
 
-目标:从干净的 `main` 出发,在新分支上开工,旧设计改动可恢复但不参与重构。
+目标:从干净的 `main` 出发,在新分支上开工,旧设计改动可恢复但不参与重构。执行结果见 16.1。
 
 1. **先提交设计文档。** 文档目录 `docs/` 当前是未跟踪文件,如果直接 `git stash -u` 或 `git clean` 会连同文档一起清掉。
    - `git switch -c redesign/max-style`(未提交改动会跟着带过去)
@@ -362,8 +387,8 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 
 | 阶段 | 内容 | 验收 |
 |---|---|---|
-| P0 准备 | 见 12.1 | 见 12.1 |
-| P1 基础 | 令牌与 Tailwind 映射、新 `Layout` / 导航 / 页脚、分区背景切换、路由切换 | 四个页面均能打开,导航可用,375/768/1440 无横向滚动条 |
+| P0 准备 ✅ | 见 12.1 | 见 12.1 |
+| P1 基础 ✅ | 令牌与 Tailwind 映射、新 `Layout` / 导航 / 页脚、分区背景切换、路由切换 | 四个页面均能打开,导航可用,375/768/1440 无横向滚动条 |
 | P2 文章 | `PostIndex` + 筛选 + 悬停预览;`ArticleBody` 阅读版式;`cover` 字段与脚本改动 | 筛选可用;键盘聚焦可出预览;文章页 17px 正文,对比度达标;没有封面的文章显示排版卡片 |
 | P3 首页 | 加载页、首屏(先用静态回退图)、`LetterAssembly`、最新文章 | 加载页可跳过且每会话一次;关闭动画后首页内容完整 |
 | P4 3D | `HeroScene` 懒加载 + 降级条件 + 从场景截图生成回退图 | 满足 7.2 任一降级条件时不请求 `three` 块;帧率与包体积有实测记录 |
@@ -377,8 +402,9 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 
 | 风险 | 影响 | 应对 |
 |---|---|---|
-| 旧设计改动被误恢复或误提交 | 重构基线被污染 | 按 12.1 在新分支上 stash;P1 通过前不 drop |
-| `git stash -u` 误收文档 | 设计文档丢失 | 12.1 第 1 步先提交文档 |
+| ~~旧设计改动被误恢复或误提交~~ | — | 已消除:stash 已在 P1 后丢弃 |
+| ~~`git stash -u` 误收文档~~ | — | 已消除:文档已提交(`4524feb`) |
+| 旧页面仍是旧样式,与新导航、页脚并存 | P2–P5 之间站点视觉不统一 | 只在 `redesign/max-style` 上开发,全部阶段完成前不合入 `main` |
 | 本地构建把 `localhost` 写进 `sitemap.xml` | 错误链接被提交 | 提交前 `git restore` 两个 SEO 文件(见 12.1 第 3 步) |
 | 中文排版与参考站的拉丁字体风格不一致 | 紧字距、全大写、超大字号照搬会显得别扭 | 大字号只用于拉丁/短词;中文标题字距不收紧;文章正文单独规范 |
 | 字母聚拢的 DOM 数量 | 中文段落过长会拖慢滚动 | 限制 120 字、240 节点;手机降级 |
@@ -393,7 +419,7 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 
 | # | 问题 | 决定 |
 |---|---|---|
-| 1 | 工作区 20 项未提交改动 | 不保留。用 stash 收走(见 12.1),P1 验收后再决定是否丢弃 |
+| 1 | 工作区 20 项未提交改动 | 不保留。P0 用 stash 收走,P1 验收后已 `git stash drop`(不另建备份分支) |
 | 2 | 站名 | 涂家乐 |
 | 3 | `CommandPalette` | 删除(设计内没有对应功能) |
 | 4 | `Article.cover` | 增加可选字段;缺失时用排版卡片 |
@@ -403,6 +429,7 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 | 8 | Josué / Decart 的角色 | Josué 只取标签药丸与筛选;Decart 不采用 |
 | 9 | 整站深色主题切换 | 不做 |
 | 10 | Bebas Neue | 不使用(站名为中文,序号标签用 Inter Tight) |
+| 11 | 中文字体声明是否拆出主 CSS | P1 不拆,P5 依据实测决定(见第 11 节) |
 
 ## 15. 实施入口(给新会话)
 
@@ -419,9 +446,9 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 
 ### 开始前
 
-1. 通读第 2、5、6、12 节。
-2. 从第 12.1 节的 P0 开始,**按顺序**做,每一步确认结果再继续。
-3. 动手前先读,不要凭印象改:`src/App.tsx`、`src/components/Layout.tsx`、`src/components/effects/SmoothScroll.tsx`、`src/api/index.ts`、`src/api/github.ts`、`scripts/generate-articles.mjs`、`vite.config.ts`、`index.html`。
+1. 通读第 2、5、6、12、16 节,以及 8.2 节末尾的"新页面必须遵守的约定"。
+2. P0、P1 已完成。确认当前分支是 `redesign/max-style`,并且 `git status` 干净,然后从 **P2** 开始,每阶段结束时汇报结果。
+3. 动手前先读,不要凭印象改:`src/App.tsx`、`src/components/Layout.tsx`、`src/components/site/`、`src/components/effects/SmoothScroll.tsx`、`src/api/index.ts`、`src/api/github.ts`、`scripts/generate-articles.mjs`、`vite.config.ts`、`index.html`。
 
 ### 约束
 
@@ -431,6 +458,17 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 - 安装任何依赖前先 `npm view <包名> version` 核实。
 - 每个阶段构建通过后单独提交。仓库现有提交风格是 `类型(范围): 中文描述`,例如 `fix(ci): 修复 generate-articles 401 错误`。
 - 视觉验证用截图,不要只看构建是否通过。
+- 不要推送到 `main`:`deploy.yml` 在推送 `main` 时会直接部署到线上。
+
+### 本机环境注意事项(P0/P1 实测)
+
+- 终端是 Windows PowerShell 5,不支持 `&&`。命令逐条执行,或用 `;` 分隔。`stash@{0}` 这类带花括号的参数要加引号。
+- 本机连 GitHub 的 22 端口会被断开(`Connection closed`),但 443 端口的 SSH 可以正常认证。推送时直接写完整地址,不改仓库配置:
+  `git push "ssh://git@ssh.github.com:443/TF49/personal-blog.git" redesign/max-style`
+  用这种方式推送后,本地的 `origin/redesign/max-style` 不会自动更新。核对远端用 `git ls-remote <同一地址>`。
+- `package-lock.json` 里的包地址全部指向 `registry.npmmirror.com`,新装的包也要沿用。不要同时运行两个 `npm install`,会互相冲突(P0 遇到过 ENOENT)。
+- 本地 `npm run build` 会把 `localhost` 写进 `public/sitemap.xml`,提交前先 `git restore public/sitemap.xml public/robots.txt`。
+- 截图环境已装在 `%TEMP%\shotrunner`(puppeteer-core 25.16.0)。P1 的验收脚本 `p1check.mjs` 也在那里,会检查 4 个页面 × 4 个宽度的横向溢出、导航、手机菜单和 reduced-motion,可以改成后续阶段的验收脚本。
 
 ### 截图脚本用法
 
@@ -448,4 +486,48 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 
 ### 建议的开场提示词
 
-> 请阅读 `docs/redesign/DESIGN.md`,按第 12.1 节执行 P0。先不要写任何业务代码。每一步执行后告诉我结果,P0 全部通过后再进入 P1。
+> 请阅读 `docs/redesign/DESIGN.md`(重点看第 8.2、12.2、15、16 节),在 `redesign/max-style` 分支上执行 P2。完成后汇报验收结果和截图,等我确认后再提交。
+
+## 16. 实施记录
+
+### 16.1 P0 准备(2026-11-04)
+
+| 步骤 | 结果 |
+|---|---|
+| 1. 提交设计文档 | 新建分支 `redesign/max-style`,提交 `4524feb`,包含 `DESIGN.md`、`tools/shoot.mjs`、`.gitignore`。`reference/` 没有进入提交 |
+| 2. 收走旧设计改动 | stash 收走 19 个已跟踪文件和 `CommandPalette.tsx`,工作区变干净。P1 后已 drop |
+| 3. 基线构建 | `npm ci`、`npm run build` 通过。基线入口 CSS gzip 10.3 kB,主 JS gzip 154.4 kB |
+| 4. 安装依赖 | `three@0.187.0`、`@types/three@0.187.0`(dev)、`@fontsource-variable/inter-tight@5.3.0`、`@fontsource-variable/noto-sans-sc@5.3.1`、`@fontsource/jetbrains-mono@5.3.0`、`@phosphor-icons/react@2.1.10`。锁文件只有新增条目,没有升级已有的包 |
+| 5. 字体自托管 | 删除 `index.html` 的 3 行 Google Fonts 链接,以及 `index.css` 里一条文档没列出的 Inter `@import`。产物中 `fonts.googleapis.com` / `fonts.gstatic.com` 引用为 0 |
+
+提交:`a83d1fe chore(redesign): 安装重构依赖并改为字体自托管`。
+
+### 16.2 P1 基础(2026-11-04)
+
+提交:`9c0d2e3 feat(redesign): 新增设计令牌、导航、页脚与路由切换`,已推送到 `origin/redesign/max-style`。
+
+**验收(无头 Chrome 自动检查,开发服务器)**
+
+| 项 | 结果 |
+|---|---|
+| 四个页面能打开 | `/`、`/blog`、`/blog/:slug`、`/about` 在 375 / 768 / 1024 / 1440 下都没有页面错误 |
+| 无横向滚动条 | 16 个组合全部通过。首次检查时首页在 375 宽有溢出,来自旧首页的装饰光斑和跑马灯;在 `main` 上加 `overflow-x: clip` 解决 |
+| 桌面导航 | 点击后路由正确,当前页显示下划线,`aria-current="page"` 正确,回到顶部,焦点移到 `#main-content` |
+| 手机菜单(375) | 按钮 44×44;菜单黑底,链接 28px;打开时正文和页脚 `inert`、页面锁定滚动,焦点在第一个链接;Esc 关闭后焦点回到按钮;点链接跳转后菜单收起 |
+| 跳到正文 | 首次按 Tab 出现在左上角,回车后焦点进入正文,URL 不变 |
+| 导航色调切换 | 页脚顶边距视口顶部 33px 时导航为黑底,31px 时切为绿底,滚回后恢复 |
+| reduced-motion | 路由切换时每 50ms 采样一次,不透明度始终为 1,没有淡入淡出 |
+| 构建 | 通过。入口 CSS gzip 63.6 kB,主 JS gzip 115.1 kB(基线 154.4 kB) |
+
+**与原计划的偏差**
+
+1. 删除了旧的 `Header.tsx`,原计划没有列出它。删除前全局搜索确认没有引用。
+2. 路由切换改为先淡出再淡入,没有做成两页叠放的交叉淡入,总时长同样是 300ms。交叉淡入要同时渲染新旧两页,还要处理两页各自的滚动位置,复杂度高。
+3. 新增 `ToneSection` 组件和 `tone.ts`,用来实现"分区背景切换"。原清单里没有这两个文件。
+4. 中文字体声明没有拆出主 CSS,推迟到 P5 决定,理由见第 11 节。
+
+**已知遗留(按计划在后续阶段处理)**
+
+- 四个页面的正文仍是旧设计,依赖 `index.css` 里标注"旧设计样式"的类、`--color-*` 变量,以及 Tailwind 的 `font-display` 别名。它们在 P2、P3、P5 重写页面时一并删除。
+- `AmbientBackground.tsx`、`CustomCursor.tsx`、`reactbits/`、`components/home/`、`utils/gsapAnimations.ts` 仍在,按 8.3 节在 P5 删除。`Toast.tsx` 仍引用 `lucide-react`。
+- 手机端只做了无头 Chrome 测试,真机的触摸滚动和 iOS Safari 表现尚未验证。
