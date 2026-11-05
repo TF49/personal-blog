@@ -22,7 +22,10 @@
   --on-ink-muted: #8d9387;  /* sage 70% / ink */
   --line-sage: #979e92;     /* ink 24% / sage */
   --line-ink: #42463f;      /* sage 28% / ink */
-  --ghost: #1a1b19;         /* 白 4% / ink,仅装饰 */
+  /* 幽灵色:比所在分区底色略深/略浅的同色相,仅用于装饰大字和代码底色 */
+  --ghost-ink: #1a1b19;     /* 白 4% / ink,对比度 1.09:1 */
+  --ghost-sage: #b4bbad;    /* ink 8% / sage,对比度 1.16:1 */
+  --ghost: var(--ghost-ink);
 
   --gutter: clamp(20px, 7.3vw, 105px);
   --header-h: 64px;
@@ -82,6 +85,7 @@
     --fg: var(--on-sage);
     --fg-muted: var(--on-sage-muted);
     --line: var(--line-sage);
+    --ghost: var(--ghost-sage);
     background-color: var(--surface);
     color: var(--fg);
   }
@@ -90,6 +94,7 @@
     --fg: var(--on-ink);
     --fg-muted: var(--on-ink-muted);
     --line: var(--line-ink);
+    --ghost: var(--ghost-ink);
     background-color: var(--surface);
     color: var(--fg);
   }
@@ -116,6 +121,12 @@
   .skip-link:focus-visible {
     transform: none;
     outline-color: var(--ink);
+  }
+
+  /* 首屏高度:手机上用 svh 避开地址栏伸缩,不支持时退回 vh */
+  .hero-h {
+    height: 100vh;
+    height: 100svh;
   }
 
   .menu-enter {
@@ -166,10 +177,11 @@
   .article-body a:hover {
     text-decoration: underline;
   }
+  /* 代码底色用幽灵色,文字用正文色(墨色叠在 ghost-sage 上为 9.5:1) */
   .article-body code:not(pre code) {
     font-family: theme('fontFamily.mono');
     background-color: var(--ghost);
-    color: var(--fg-muted);
+    color: var(--fg);
     border-radius: 3px;
     padding: 0.1em 0.4em;
     font-size: 0.9em;
@@ -177,7 +189,7 @@
   .article-body pre {
     font-family: theme('fontFamily.mono');
     background-color: var(--ghost);
-    color: var(--fg-muted);
+    color: var(--fg);
     border-radius: 4px;
     padding: 1rem;
     overflow-x: auto;

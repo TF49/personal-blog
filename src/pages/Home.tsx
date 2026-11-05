@@ -40,13 +40,8 @@ export default function Home() {
 
       {/* ========== 首屏 ========== */}
       <ToneSection tone="sage" as="section" aria-label="首屏">
-        <SectionLabel label="HOME" index={1} className="site-wrap pt-20" />
-        {/* P4：HeroScene 懒加载；降级逻辑在 HeroScene 内部完成 */}
-        <Suspense
-          fallback={
-            <HeroFallback title={profile.title} subtitle={profile.name} />
-          }
-        >
+        {/* HeroScene 懒加载;降级逻辑在 HeroScene 内部完成 */}
+        <Suspense fallback={<HeroFallback title={profile.title} subtitle={profile.name} />}>
           <HeroScene title={profile.title} subtitle={profile.name} />
         </Suspense>
       </ToneSection>
