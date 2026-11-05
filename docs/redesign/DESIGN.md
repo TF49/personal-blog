@@ -1,9 +1,9 @@
 ﻿# 前端重构设计文档
 
-- 状态:**已确认(v1.3)**,实施中。**P0、P1、P2、P3 已完成**,下一步 P4
-- 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录;v1.2 补充 P2 实施记录;v1.3 补充 P3 实施记录)
+- 状态:**v1.4,P0–P5 已完成**。剩余事项见 [16.8](#168-剩余事项)
+- 日期:2026-11-04(v1.0 确认;v1.1 补充 P0/P1 实施记录;v1.2 补充 P2 实施记录;v1.3 补充 P3 实施记录;v1.4 补充 P4 收尾、P3/P4 问题修复、P5 实施记录)
 - 范围:`personal-blog` 全站前端视觉与交互重构
-- 分支:`redesign/max-style`(已推送到 `origin`;`main` 未改动,线上站点不受影响)
+- 分支:`redesign/max-style`(`main` 未改动,线上站点不受影响)。v1.4 的提交只在本地,尚未推送
 - 实施会话请直接跳到[第 15 节](#15-实施入口给新会话),已完成阶段的结果与偏差见[第 16 节](#16-实施记录)。
 - "已核实"均指对项目文件、参考站截图和运行状态的实际读取。
 
@@ -116,7 +116,7 @@
 | `--on-ink-muted` | sage 70% 混合 | 次要文字,下限 70% |
 | `--line-sage` | ink 24% | 绿底分隔线 |
 | `--line-ink` | sage 28% | 黑底分隔线 |
-| `--ghost` | 白 4% 混入 ink | 仅用于幽灵大标题,装饰性 |
+| `--ghost` | 随分区切换:黑底为 `--ghost-ink`(白 4% 混入 ink,`#1A1B19`),绿底为 `--ghost-sage`(ink 8% 混入 sage,`#B4BBAD`) | 幽灵大标题与代码底色,装饰性 |
 
 除上表外不引入第三种色相。强调用"反色":绿底上用墨色填充,黑底上用鼠尾草绿填充。
 
@@ -134,7 +134,9 @@
 | 鼠尾草绿 70% / 墨色 | 5.97:1 | 黑底次要文字,达标 |
 | 墨色 60% / 鼠尾草绿 | 4.07:1 | **不达标**,禁止使用 |
 | 白 / 鼠尾草绿 | 1.69:1 | **不达标**,禁止使用 |
-| `--ghost` / 墨色 | 1.09:1 | 刻意极低,仅限装饰且 `aria-hidden` |
+| `--ghost-ink` / 墨色 | 1.09:1 | 刻意极低,仅限装饰且 `aria-hidden` |
+| `--ghost-sage` / 鼠尾草绿 | 1.17:1 | 同上,绿底上的幽灵字 |
+| 墨色 / `--ghost-sage` | 9.55:1 | 绿底文章里的代码文字 |
 | 墨色 40% / 鼠尾草绿 | 2.39:1 | 列表悬停时"其余项降到 40%"的实际对比度,仅作为非当前项的视觉弱化,不承载必须读到的信息 |
 
 P1 用实色复算:两项次要文字为 5.43:1 与 5.95:1(上表 5.45 / 5.97 为不同取整方式),均达标。
@@ -219,11 +221,15 @@ P1 用实色复算:两项次要文字为 5.43:1 与 5.95:1(上表 5.45 / 5.97 �
 
 - 目标层:最终段落,每个字符是一个 `span`,初始 `opacity: 0`,位置即最终排版。
 - 飞行层:左右两列的"飞行字母",按组排布。
-- 一条 GSAP 时间线由 ScrollTrigger 驱动:`start: "50% 100%"`,`end: "50% -10%"`,`scrub: 1`。
-- 每个飞行字母沿三点路径(起点、控制点、终点)运动,`curviness: 0.85`,控制点横向偏移 ±90px、纵向 +160px,每个字母起始间隔 0.025s。
-- 飞行字母在接近终点时淡出,目标字符在进度 >0.65 时淡入,避免像素对不齐。
-- 中文以单个汉字为单位。限制:段落不超过 120 字,总 DOM 节点不超过 240 个。
-- 读屏:飞行层 `aria-hidden="true"`,目标段落是真实文本。
+- 一条 GSAP 时间线由 ScrollTrigger 驱动:`start: "50% 100%"`,`end: "50% 40%"`,`scrub: 1`。(v1.4 由 `50% -10%` 改为 `50% 40%`:原值要等段落滚出视口顶部才拼完,读者看不到完整段落。)
+- 起点:按落点分左右两组,各排成 5 列栅格(列距 22px、行距 30px),放在段落上方 40px 处。(v1.4 由"两侧随机位置"改为栅格,原实现起点高度只在约 66px 内随机,右侧字母挤成一团。)
+- 每个飞行字母沿三点路径(起点、控制点、终点)运动,`curviness: 0.85`,控制点横向偏移 ±90px、纵向 +160px,时长 1.25,每个字母起始间隔 0.025。
+- 交叉淡变按**每个字母自己的进度**计算:进度超过 0.65 后飞行字母淡出、目标字符淡入。(v1.4 修复:原实现用整条时间线的进度,导致字母中途消失。)
+- 终点的纵向坐标要减去半个"行高与字形区高度之差":行内 span 的矩形是字形区,绝对定位 span 的高度是行高。
+- 等 `document.fonts.ready` 后再测量;只有窗口宽度变化时才重排。
+- 中文以单个汉字为单位,空白不生成飞行字母。限制:段落不超过 160 字;超过时整段静态显示,**不截断原文**。(v1.4 由 120 字改为 160 字:简介 155 字,原实现截掉了后 35 字。)
+- 读屏:读 `sr-only` 的完整原文;逐字段落和飞行层都 `aria-hidden`。
+- 手机(< 768px)整段随滚动淡入;reduced-motion 直接显示终态。
 
 ## 7. 首屏 3D
 
@@ -232,12 +238,13 @@ P1 用实色复算:两项次要文字为 5.43:1 与 5.95:1(上表 5.45 / 5.97 �
 - 一个 Three.js 场景,物体为程序化生成的石头:二十面体细分后用噪声位移,漫反射 + 粗糙度程序纹理,单个方向光 + 环境光,地面接收柔和阴影,背景和雾色使用 `--sage`。
 - 为什么程序化:Max 的石头来自 Blender 烘焙模型,我拿不到,且不应复制。
 - 交互:鼠标移动时相机缓动环绕(参考 Codrops 的相机环绕写法,插值系数 0.05);滚动时物体轻微上移。
-- 标语(右对齐、错行)叠在物体上。**文字必须压在物体深色部分之上**,否则达不到对比度;若实现中发现文字落到亮部,改为墨色并移位。
+- 标语(右对齐、错行)**只放在鼠尾草绿上,不叠在石头上**。(v1.4 修订:实测墨色标语压在黑石头上看不清,石头上也没有可用的亮部。)做法是取景避让:横屏时石头中心在画面 (36%, 47%),直径占视口高度 62%,标语宽度不超过视口 40%;竖屏时石头中心在 (50%, 34%),直径占视口宽度 72%,标语在下半部。
+- 地面用 `ShadowMaterial`,只渲染阴影(不透明度 0.22),背景色直接透出。阴影最深处 `#9BA295`,墨色叠在上面 7.17:1。
 
 ### 7.2 加载与降级
 
 - `three` 通过动态 `import()` 懒加载,不进入主包。
-- 以下任一条件成立时不加载 3D,改用静态回退图(从场景截图生成的 WebP)加轻微 CSS 视差:
+- 以下任一条件成立时不加载 3D,改用静态回退图(从场景截图生成的 WebP,横竖两种构图;v1.4 未做 CSS 视差):
   - 视口宽度 < 768px
   - `prefers-reduced-motion: reduce`
   - 不支持 WebGL2
@@ -391,8 +398,8 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 | P1 基础 ✅ | 令牌与 Tailwind 映射、新 `Layout` / 导航 / 页脚、分区背景切换、路由切换 | 四个页面均能打开,导航可用,375/768/1440 无横向滚动条 |
 | P2 文章 ✅ | `PostIndex` + 筛选 + 悬停预览;`ArticleBody` 阅读版式;`cover` 字段与脚本改动 | 筛选可用;键盘聚焦可出预览;文章页 17px 正文,对比度达标;没有封面的文章显示排版卡片 |
 | P3 首页 ✅ | 加载页、首屏(先用静态回退图)、`LetterAssembly`、最新文章 | 加载页可跳过且每会话一次;关闭动画后首页内容完整 |
-| P4 3D | `HeroScene` 懒加载 + 降级条件 + 从场景截图生成回退图 | 满足 7.2 任一降级条件时不请求 `three` 块;帧率与包体积有实测记录 |
-| P5 关于与收尾 | `About`(时间线、技术栈、精选仓库)、删除 8.3 节的文件、更新 README、a11y 与性能复查 | 无死代码引用;README 与实际路由、技术栈一致 |
+| P4 3D ✅ | `HeroScene` 懒加载 + 降级条件 + 从场景截图生成回退图 | 满足 7.2 任一降级条件时不请求 `three` 块;帧率与包体积有实测记录 |
+| P5 关于与收尾 ✅ | `About`(时间线、技术栈、精选仓库)、删除 8.3 节的文件、更新 README、a11y 与性能复查 | 无死代码引用;README 与实际路由、技术栈一致 |
 
 ### 12.3 验证方法
 
@@ -441,14 +448,16 @@ cover?: string   // 封面图地址;缺失时前端渲染排版卡片
 |---|---|---|
 | `docs/redesign/reference/` | 10 张参考站截图(Max 7 张、Josué 3 张),文件名即内容 | 否(已加入 `.gitignore`) |
 | `docs/redesign/tools/shoot.mjs` | 无头 Chrome 滚动截图脚本 | 是 |
+| `docs/redesign/tools/capture-hero.mjs` | 从首屏 3D 场景截取无文字回退图(横竖两张) | 是 |
 
 `reference/` 里的文件:`max-loader-71pct`、`max-hero`、`max-about-assembling`、`max-about-final`、`max-works-idle`、`max-works-hover`、`max-contact`、`jozue-hero`、`jozue-index-filter`、`jozue-footer-cta`(均为 `.png`)。截图是在 1440×900 下用软件渲染的无头 Chrome 拍的。
 
 ### 开始前
 
 1. 通读第 2、5、6、12、16 节,以及 8.2 节末尾的"新页面必须遵守的约定"。
-2. P0、P1、P2、P3 已完成。确认当前分支是 `redesign/max-style`,并且 `git status` 干净,然后从 **P4** 开始,每阶段结束时汇报结果。
-3. 动手前先读,不要凭印象改:`src/App.tsx`、`src/components/Layout.tsx`、`src/components/site/`(含 `IntroLoader`、`GhostHeading`、`LetterAssembly`、`HeroFallback`)、`src/components/effects/SmoothScroll.tsx`、`src/pages/Home.tsx`、`src/api/index.ts`、`src/api/github.ts`、`scripts/generate-articles.mjs`、`vite.config.ts`、`index.html`。
+2. P0–P5 已完成。确认当前分支是 `redesign/max-style`,并且 `git status` 干净,然后从 **16.8 剩余事项**里挑选要做的项。
+3. 动手前先读,不要凭印象改:`src/App.tsx`、`src/components/Layout.tsx`、`src/components/site/`(含 `HeroCopy`、`HeroFallback`、`HeroScene`、`hero/rockScene.ts`、`LetterAssembly`、`PostIndex`)、`src/components/effects/SmoothScroll.tsx`、`src/pages/`、`src/api/index.ts`、`src/api/github.ts`、`vite.config.ts`、`index.html`。
+4. 改了首屏 3D 场景后,用 `docs/redesign/tools/capture-hero.mjs` 重新生成 `src/assets/hero/` 的两张回退图。
 
 ### 约束
 
@@ -486,7 +495,7 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 
 ### 建议的开场提示词
 
-> 请阅读 `docs/redesign/DESIGN.md`(重点看第 7、8.2、12.2、15、16 节),在 `redesign/max-style` 分支上执行 P4。完成后汇报验收结果和截图,等我确认后再提交。
+> 请阅读 `docs/redesign/DESIGN.md`(重点看第 15、16 节),在 `redesign/max-style` 分支上处理 16.8 节"剩余事项"中的第 N 项。完成后汇报验收结果和截图,等我确认后再提交。
 
 ## 16. 实施记录
 
@@ -624,3 +633,108 @@ node shoot.mjs "http://localhost:5173/" home 1440 900 12 5000
 - `components/home/`(25 个文件)、`reactbits/`、`AmbientBackground.tsx`、`CustomCursor.tsx`、`utils/gsapAnimations.ts` 仍在,`Home.tsx` 已不再引用,按 8.3 节在 P5 删除。
 - `index.css` 里标注\"旧设计样式\"的类仍在,随 P5 旧页面重写时一并删除。
 - 移动端只做了无头 Chrome 测试,真机触摸和 iOS Safari 待 P5 验证。
+
+### 16.5 P4 3D(2026-11-04)
+
+提交:`5580337 feat(redesign): P4 HeroScene 三维石头场景与降级策略`(由上一个会话完成,未写记录);收尾见本节和 16.6。
+
+**最终实现**
+
+| 项 | 结果 |
+|---|---|
+| 场景代码 | `src/components/site/hero/rockScene.ts`,纯 Three.js。只对 `three` 做具名导入,便于摇树;`HeroScene.tsx` 动态 `import()` 它 |
+| 石头几何 | 二十面体细分 32,删除法线和 UV 后合并顶点,得到平滑法线。大形与细节各用一层 3D 值噪声分形叠加,y 方向压扁到 0.78,底部压平作支撑面 |
+| 程序纹理 | 顶点色作漫反射(岩面色块 + 凹陷加深);顶点属性 `aRough` 经 `onBeforeCompile` 乘到 `roughness` 上(0.7–1.0)。用顶点属性而不用贴图,是因为球面 UV 有接缝 |
+| 面数 | 21,780 个三角面、10,892 个顶点(Node 中直接运行几何生成统计),低于 30k 预算;生成耗时约 0.2s |
+| 地面 | `ShadowMaterial`(不透明度 0.22),只画阴影 |
+| 交互 | 指针移动时相机缓动环绕(系数 0.05);滚动一屏石头上移 0.4 个半径;石头绕 y 轴自转 0.12 rad/s,按帧间隔计算 |
+| 暂停 | 首屏离开视口(`IntersectionObserver`)或标签页隐藏时停止 `requestAnimationFrame` |
+| 首帧 | 回退图一直垫在画布下;场景画完第一帧后画布 300ms 淡入,切换不闪 |
+| 回退图 | `src/assets/hero/hero-landscape.webp`(1920×1200,11.1 kB)、`hero-portrait.webp`(1148×2041,11.1 kB),由 `docs/redesign/tools/capture-hero.mjs` 从场景截取,不含文字。`<picture>` 按 `orientation` 选图 |
+
+**实测(按线上子路径 `/personal-blog/` 构建,`vite build`)**
+
+| 项 | 结果 |
+|---|---|
+| 场景分块 `rockScene-*.js` | 528.3 kB,gzip 132.5 kB。原实现整包动态导入 `three`,分块 753.5 kB / gzip 192.7 kB |
+| `HeroScene-*.js` | 1.2 kB,gzip 0.7 kB |
+| 主包 `index-*.js` | gzip 114.3 kB,不含 three |
+| 降级 | 375 宽、reduced-motion 下都不请求场景分块(无头 Chrome 资源记录确认) |
+| 帧率 | 软件渲染(SwiftShader)无头 Chrome:1440×900 下 18 fps,1920×1080 下 14 fps。**不代表真机**,真机 GPU 帧率尚未测 |
+
+**与原计划的偏差**
+
+1. 标语不叠在石头上,改为取景避让,理由见 7.1。
+2. 回退图没有做 CSS 视差。
+3. 场景分块超过 Vite 默认的 500 kB 提示阈值,构建会打印警告。它是懒加载块,只在桌面且满足条件时请求,没有调高阈值去掩盖这个提示。
+
+### 16.6 P3/P4 问题修复(2026-11-04)
+
+提交:`97d8b41 fix(redesign): 修复首屏回退图路径与文字层,重写字母聚拢`、`5338527 feat(redesign): P4 石头改为程序纹理与平滑法线`
+
+对照参考站审查时发现的问题,以及修复方式:
+
+| # | 问题 | 修复 |
+|---|---|---|
+| 1 | 回退图写成 `url(/hero-fallback.png)`,线上部署在 `/personal-blog/` 下会 404 | 图片移到 `src/assets/hero/`,用 `import` 引入,构建产物里是 `/personal-blog/assets/hero-*.webp`(已核对) |
+| 2 | 回退图是带标语的截图,手机端出现两份文字 | 截图脚本隐藏文字层后再截;横竖各一张 |
+| 3 | 墨色标语压在黑石头上看不清;`TF49` 用了黑底专用的 `--ghost`,在绿底上成了黑色大字 | 文字层抽成 `HeroCopy`,石头按 7.1 取景避让;`--ghost` 改为随分区切换 |
+| 4 | 字母聚拢截断原文、字母中途消失、起点挤成一团、段落滚出视口才拼完 | 见 6.2 中标注 v1.4 的各条 |
+| 附 | 绿底文章里的行内代码是 `#454943` 字配 `#1A1B19` 底,看不清 | 代码文字改用正文色,底色随分区切换,墨色叠在 `--ghost-sage` 上 9.55:1 |
+
+验证(无头 Chrome,开发服务器):1440 宽下标语框与石头不重叠;段落中心到达视口 40% 时 135/135 个非空白字符完全显示,`sr-only` 保留 155 字全文;375 宽和 reduced-motion 下都不加载场景分块、段落直接可见。
+
+### 16.7 P5 关于与收尾(2026-11-04)
+
+提交:`f7a9635 feat(redesign): P5 重写关于页并清理旧设计代码`
+
+**关于页**(`src/pages/About.tsx`):
+
+| 分区 | 底色 | 内容 |
+|---|---|---|
+| `( ABOUT. )` | 黑 | 姓名、头衔、完整简介;邮件、微信、所在地 |
+| `( PATH. )` | 绿 | `Timeline`:居中 670px 窄栏,序号 / 阶段 / 标题 / 说明 |
+| `( WORKS. )` | 黑 | `RepoList`:GitHub 精选仓库,悬停或聚焦时其余行降到 40% |
+| `( STACK. )` | 黑 | 按分类分组的纯文字技术栈 |
+
+分区编号按实际显示的分区连续递增。页面不加入场动效(阅读页保持安静)。
+
+**精选仓库与原计划的偏差**:4.3 节原定"请求失败时整块隐藏"。实际 `getPinnedRepos` 失败时返回 `featuredRepos.ts` 的本地数据,你确认过关于页需要展示仓库,所以改为:用本地数据照常展示,只是不显示星标数(本地星标数是手写的,不可信)。本次测试时 GitHub API 可用,显示的是实时数据。
+
+**清理**
+
+| 项 | 结果 |
+|---|---|
+| 删除文件 | `components/home/` 25 个、`components/reactbits/` 12 个、`AmbientBackground.tsx`、`CustomCursor.tsx`、`SectionTitle.tsx`、`icons.tsx`、`utils/gsapAnimations.ts`、`data/highlights.ts`、`data/stats.ts`,共 43 个。删除前全局搜索确认无引用 |
+| `api/index.ts` | 删除 `getHighlights`、`getStats`、`getHomeSnapshot`(及其辅助函数)和恒返回 `[]` 的 `getCategories` |
+| 类型 | 删除 `HighlightCard`、`StatBlock` |
+| 依赖 | 卸载 `framer-motion`、`lucide-react`,以及同样不再被引用的 `@gsap/react`、`@types/canvas-confetti`。锁文件仍全部指向 `registry.npmmirror.com` |
+| 提示条 | `Toast.tsx` 改用 Phosphor 图标;去掉红绿色,只用两色令牌,用文字"完成 / 出错 / 提示"区分类型,出错时 `role="alert"` |
+| 样式 | 删除 `index.css` 的旧设计变量和旧样式段,保留提示条入场动画和全局 reduced-motion 规则;删除 Tailwind 的 `font-display` 别名 |
+| `featuredRepos.ts` | `personal-blog` 的兜底描述从"Framer Motion 动效"改为"GSAP 与 Three.js 动效" |
+| README | 重写:路由改为 `BrowserRouter` + `404.html`,技术栈、目录、内容格式、回退图生成方式 |
+
+**附带修复**:卸载 `@types/canvas-confetti` 后 `tsc` 报 TS2688。原因是上级目录 `D:\Developer Tool\node_modules\@types\` 里有一份 `canvas-confetti`,TypeScript 默认会向上查找类型目录。在两个 tsconfig 里加 `typeRoots: ["./node_modules/@types"]`,只读项目自己的类型包。
+
+**体积变化**(gzip):`About-*.js` 47.4 kB → 3.5 kB;入口 CSS 64.0 kB → 58.1 kB;主包 115.1 kB → 114.3 kB。
+
+**复查(无头 Chrome,开发服务器)**
+
+| 项 | 结果 |
+|---|---|
+| 4 个页面 × 375 / 768 / 1024 / 1440 | 16 个组合都没有页面错误、控制台错误、4xx/5xx 请求(不含 GitHub API)和横向溢出;每页 1 个 `h1` |
+| 关于页 | 4 个仓库、5 段经历、6 组技术栈 |
+| reduced-motion(首页) | 不出现加载页、不渲染 3D 画布、不请求场景分块,段落 0 个隐藏字符 |
+| 构建 | `tsc -b` 与 `vite build` 通过 |
+
+### 16.8 剩余事项
+
+按影响排序。都还没做:
+
+1. **手机端文章标题被截断**:375 宽时文章索引的序号列和日期列占位太多,标题只剩几个字。建议手机端把日期移到标题下方。
+2. **首页"最新文章"的分区标签没对齐**:`[ N.003 ]` 紧挨着 `( WRITING. )`,没有像其他分区那样靠右;首页叫 WRITING,文章页叫 POSTS,名称不一致。
+3. **悬停预览卡挡住被悬停的标题**:预览卡跟随光标出现在右下方,正好盖住当前行。
+4. **关于分区缺头像和"关于我"链接**(4.1 节):`public/images/TuJiaLe.png` 可用。
+5. **真机验证**:iOS Safari、安卓 Chrome 的触摸滚动、真机 GPU 下的 3D 帧率、加载页实际时长(软件渲染下从页面加载到加载页消失为 4.7 秒,时间线本身约 3.3 秒,目标不超过 3.5 秒)。
+6. **文章内容格式**(不是代码问题):第一篇文章的小标题和代码在 Issue 里是普通段落,渲染出来只有 1 个 `h2`、0 个代码块;另外 4 篇只有 28–42 个字符,其中两篇 AI-Helper 重复。需要在 `TF49/blog-content` 里修改 Markdown。
+7. **合并上线**:`redesign/max-style` 合并到 `main` 会触发部署。合并前建议先在本地 `npm run build` + `npm run preview` 走一遍,并恢复构建改写的 `public/sitemap.xml`、`public/robots.txt`。
