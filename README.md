@@ -2,30 +2,30 @@
 
 基于 React + Vite + TypeScript + Tailwind CSS 的个人博客前端。
 
-视觉风格参考南孚官网：全屏分区、大标题与数据块、三段式亮点卡片、时间线、产品式卡片布局，并搭配 Framer Motion 动效。
+视觉与动效以 Max Milkin 的作品集为主要参照：鼠尾草绿与近黑两色交替分区、大量留白、字母环加载页、关于段落的字母聚拢、首屏 3D 石头。完整的设计说明、取舍和实施记录见 [`docs/redesign/DESIGN.md`](docs/redesign/DESIGN.md)。
 
 ## 在线预览
 
-部署完成后在此填写：
-
 - `https://tf49.github.io/personal-blog/`
 
-## 功能
+## 页面
 
-- **首页**：工业风分区布局、数据块、动效组件
-- **博客列表**：分类筛选、推荐阅读
-- **博客详情**：按 `slug` 路由加载、正文渲染、相关推荐
-- **关于我**：个人档案、联系方式、技术栈网格、成长时间线
+- **首页**：字母环加载页（每个会话一次，可跳过）、3D 石头首屏、关于段落、最新 6 篇文章
+- **文章列表**（`/blog`）：分类筛选、两列文章索引、悬停预览
+- **文章详情**（`/blog/:slug`）：17px 正文阅读版式、阅读进度条、代码复制、相关文章
+- **关于**（`/about`）：简介与联系方式、经历时间线、GitHub 精选仓库、技术栈
 
 ## 技术栈
 
 - **框架**：React 18
 - **构建**：Vite 5
 - **语言**：TypeScript
-- **样式**：Tailwind CSS
-- **路由**：React Router（`HashRouter`，适配 GitHub Pages）
-- **动效**：Framer Motion
-- **图标**：lucide-react
+- **样式**：Tailwind CSS 3 + CSS 变量设计令牌（`src/index.css`）
+- **路由**：React Router 6（`BrowserRouter`，配合 `public/404.html` 适配 GitHub Pages）
+- **动效**：GSAP（ScrollTrigger、MotionPath）+ Lenis 平滑滚动
+- **3D**：Three.js，首屏按需加载
+- **图标**：Phosphor Icons
+- **字体**：Inter Tight、Noto Sans SC、JetBrains Mono，均通过 fontsource 自托管
 
 ## 本地运行
 
@@ -34,9 +34,7 @@ npm install
 npm run dev
 ```
 
-开发地址：
-
-- `http://localhost:5173`
+开发地址：`http://localhost:5173`
 
 ## 构建与预览
 
@@ -45,49 +43,41 @@ npm run build
 npm run preview
 ```
 
-构建产物输出到：
+构建产物输出到 `dist/`。
 
-- `dist/`
+`npm run build` 会先运行 `scripts/generate-seo-files.mjs` 生成 `public/sitemap.xml` 与 `public/robots.txt`。本地构建时站点地址默认为 `http://localhost/`，这两个文件的改动不要提交，CI 会用正式地址重新生成。
 
 ## 目录结构
 
 - `src/pages`：Home / Blog / BlogPost / About
-- `src/components`：Header、Footer、Layout、SectionTitle、图标等
-- `src/data`：本地数据（profile、techStack、timeline、stats、highlights）
-- `src/api`：数据接口封装（文章从 `articles.json` 读取，其它为本地数据；后续可替换为后端 API）
-- `src/types`：TypeScript 类型定义
-- `public`：静态资源
+- `src/components/site`：新设计的组件（导航、分区色调、加载页、首屏、字母聚拢、文章索引、时间线、仓库列表等）
+- `src/components/site/hero/rockScene.ts`：首屏 3D 场景（纯 Three.js，懒加载）
+- `src/components`：布局、页脚、SEO、路由切换、提示条
+- `src/data`：本地数据（个人资料、技术栈、时间线、精选仓库）
+- `src/api`：数据接口（文章读取 `articles.json`，仓库数据请求 GitHub API）
+- `src/assets/hero`：首屏静态回退图
+- `docs/redesign`：设计文档与截图脚本
 
-## 数据与内容说明
+## 数据与内容
 
-博客文章由 GitHub Issues 生成到：
+博客文章来自 GitHub Issues（仓库 `TF49/blog-content`，标签 `blog`），由 `npm run generate:articles` 生成到 `public/articles.json`。前端运行时从站点根目录加载该文件，文章详情页把 `content` 字段（HTML）经 DOMPurify 消毒后渲染。
 
-- `public/articles.json`
+Issue 正文按 Markdown 解析：标题请用 `##`，代码请用三个反引号围起来，否则会被当作普通段落显示。frontmatter 可写 `slug`、`date`、`summary`、`category`、`cover`。
 
-前端运行时会从站点根目录加载：
+关于页的精选仓库在 `src/data/featuredRepos.ts` 配置。GitHub API 请求失败时使用同文件里的本地数据，此时不显示星标数。
 
-- `articles.json`（发布后对应 `dist/articles.json`）
+## 首屏 3D 与回退图
 
-文章详情页通过 `dangerouslySetInnerHTML` 渲染 `content` 字段（HTML 字符串）。
+首屏 3D 场景在以下情况不加载，改为显示静态回退图：视口宽度小于 768px、系统开启“减少动态效果”、不支持 WebGL2、开启省流量模式、预渲染。
 
-## 部署到 GitHub Pages（推荐）
+回退图由 `docs/redesign/tools/capture-hero.mjs` 从 3D 场景截取。修改场景后按该脚本顶部的说明重新生成。
 
-项目已内置 GitHub Actions 工作流：
+## 部署到 GitHub Pages
 
-- `.github/workflows/deploy.yml`
+项目内置 GitHub Actions 工作流 `.github/workflows/deploy.yml`：
 
-部署步骤：
+1. 推送代码到 `main` 分支（推送即部署）
+2. 仓库 `Settings -> Pages` 的 **Source** 选择 **GitHub Actions**
+3. 等待 `Deploy to GitHub Pages` 工作流完成
 
-1. 推送代码到 GitHub 仓库的 `main` 分支
-2. 打开仓库设置：`Settings -> Pages`
-3. 将 **Source** 选择为 **GitHub Actions**
-4. 等待 `Actions` 中的 `Deploy to GitHub Pages` 工作流执行完成
-
-路由说明：
-
-- 本项目使用 `HashRouter`，因此页面路由形如：`/#/blog`、`/#/about`
-
-## 后续计划
-
-- 将 `src/api/index.ts` 中的本地数据替换为 `fetch('/api/...')` 对接 Spring Boot
-- 文章内容可选：Markdown + 脚本生成 JSON（或自建管理端）
+路由说明：项目使用 `BrowserRouter`，页面路由形如 `/personal-blog/blog`、`/personal-blog/about`。GitHub Pages 不支持单页应用的路径重写，直接访问子路径时由 `public/404.html` 把路径转给入口页，`index.html` 里的脚本再还原地址。

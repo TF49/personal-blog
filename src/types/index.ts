@@ -39,20 +39,6 @@ export interface TimelineEvent {
   description: string
 }
 
-export interface HighlightCard {
-  title: string
-  subtitle: string
-  description: string
-  icon: string
-  value?: string
-}
-
-export interface StatBlock {
-  value: string
-  unit?: string
-  label: string
-}
-
 export interface GitHubRepo {
   id: number
   name: string

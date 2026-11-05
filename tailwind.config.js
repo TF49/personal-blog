@@ -18,8 +18,6 @@ export default {
     extend: {
       fontFamily: {
         sans: sansStack,
-        // 旧页面仍在用 font-display,先指向新字体;P5 随旧页面一起移除
-        display: sansStack,
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
       fontSize: {

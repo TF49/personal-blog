@@ -1,231 +1,161 @@
-import { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
-import { getProfile, getTechStack, getTimeline } from '@/api'
-import type { AuthorProfile } from '@/types'
+import { useEffect, useState } from 'react'
+import { getPinnedRepos, getProfile, getTechStack, getTimeline } from '@/api'
 import { categoryLabels } from '@/data/techStack'
-import { ArrowRight } from 'lucide-react'
+import { fallbackRepos, featuredRepoFullNames } from '@/data/featuredRepos'
+import type { AuthorProfile, GitHubRepo } from '@/types'
 import SEO from '@/components/SEO'
-import { animateEntrance, animateScrollReveal, animateStagger } from '@/utils/gsapAnimations'
-import { gsap } from 'gsap'
-import { BlurText, SplitText, Magnet, ShinyText, ScrollHighlightText } from '@/components/reactbits'
+import ToneSection from '@/components/site/ToneSection'
+import SectionLabel from '@/components/site/SectionLabel'
+import Timeline from '@/components/site/Timeline'
+import RepoList from '@/components/site/RepoList'
+
+type RepoState = { list: GitHubRepo[]; live: boolean }
 
 export default function About() {
   const [profile, setProfile] = useState<AuthorProfile | null>(null)
-  const [techStack] = useState(() => getTechStack())
-  const [timeline] = useState(() => getTimeline())
-  
-  // Refs for GSAP animations
-  const headerRef = useRef<HTMLDivElement>(null)
-  const contactRef = useRef<HTMLDivElement>(null)
-  const techStackRef = useRef<HTMLDivElement>(null)
-  const timelineRef = useRef<HTMLDivElement>(null)
+  const [repos, setRepos] = useState<RepoState | null>(null)
+  const [timeline] = useState(getTimeline)
+  const [techStack] = useState(getTechStack)
 
   useEffect(() => {
     let cancelled = false
-    const load = async () => {
-      try {
-        const p = await getProfile()
-        if (cancelled) return
-        setProfile(p)
-      } finally {
-        document.dispatchEvent(new Event('prerender-ready'))
-      }
-    }
-    load()
+    getProfile()
+      .then((p) => {
+        if (!cancelled) setProfile(p)
+      })
+      .finally(() => document.dispatchEvent(new Event('prerender-ready')))
     return () => {
       cancelled = true
     }
   }, [])
 
-  // Setup animations when profile is loaded
+  // 精选仓库:接口失败时 getPinnedRepos 返回本地兜底数据,照常展示,但不显示星标数
   useEffect(() => {
-    if (!profile) return
-    
-    const ctx = gsap.context(() => {
-      // Header entrance animation
-      if (headerRef.current) {
-        animateEntrance(headerRef.current, {
-          from: { opacity: 0, y: 30 },
-          delay: 0.2
-        })
-      }
-      
-      // Contact section animation
-      if (contactRef.current) {
-        animateScrollReveal(contactRef.current, {
-          from: { opacity: 0, y: 20 }
-        })
-      }
-      
-      // Tech stack stagger animation
-      if (techStackRef.current) {
-        animateStagger(techStackRef.current, '.tech-category', {
-          from: { opacity: 0, y: 25 },
-          stagger: 0.1
-        })
-      }
-      
-      // Timeline animation
-      if (timelineRef.current) {
-        animateStagger(timelineRef.current, '.timeline-item', {
-          from: { opacity: 0, x: -30 },
-          stagger: 0.15
-        })
-      }
-    })
-    
-    return () => ctx.revert()
-  }, [profile])
+    let cancelled = false
+    getPinnedRepos(featuredRepoFullNames)
+      .then(({ repos: list }) => {
+        if (cancelled) return
+        const live = list.some((r) => !fallbackRepos.includes(r))
+        setRepos({ list, live })
+      })
+      .catch(() => {
+        if (!cancelled) setRepos(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   if (!profile) {
     return (
-      <div className="section-padding text-center text-[var(--color-muted)] bg-white min-h-screen flex items-center justify-center font-display uppercase tracking-widest text-xs">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
-          正在初始化系统...
-        </div>
-      </div>
+      <ToneSection tone="ink" as="div" className="flex min-h-screen items-center justify-center pt-[64px]">
+        <p className="text-label text-fg-muted">加载中…</p>
+      </ToneSection>
     )
   }
 
+  const github = profile.social.find((s) => s.name === 'GitHub' && s.url && s.url !== '#')
+  let sectionIndex = 1
+
   return (
-    <div className="bg-white">
-      <SEO 
-        title="关于我" 
-        description={`${profile.name}的个人档案 - ${profile.title}`} 
-      />
-      {/* 关于我 头部 - 工业简约风 */}
-      <section ref={headerRef} className="relative pt-40 pb-24 overflow-hidden bg-[var(--color-black)] text-white">
-        <div className="container-narrow relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 mb-8 rounded-full">
-            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full animate-pulse" />
-            <ShinyText text="核心档案资料" speed={5} color="#ffffff" />
-          </div>
-          <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl mb-8 tracking-tighter">
-            <SplitText text={profile.name} delay={0.2} animation="popIn" /> <span className="text-[var(--color-primary)]">.</span>
-          </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
-            <p className="text-xl sm:text-2xl text-white/80 font-light leading-relaxed">
-              <BlurText text={profile.title} delay={0.4} />
-            </p>
-            <ScrollHighlightText
-              text={profile.bio}
-              className="text-lg font-light leading-loose"
-            />
-          </div>
-        </div>
-        {/* 背景装饰 */}
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--color-primary)]/5 to-transparent pointer-events-none" />
-      </section>
+    <>
+      <SEO title="关于" description={`${profile.name} · ${profile.title}`} />
 
-      {/* 联系方式条 */}
-      <section ref={contactRef} className="py-12 border-y border-gray-100 bg-[var(--color-surface)]">
-        <div className="container-narrow">
-            <div className="flex flex-wrap justify-between items-center gap-8">
-            <div className="flex items-center gap-12">
-              <div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">微信</div>
-                <div className="font-display text-lg text-white">{profile.wechat}</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">邮件</div>
-                <a href={`mailto:${profile.email}`} className="font-display text-lg text-white hover:text-[var(--color-primary)] transition-colors">{profile.email}</a>
-              </div>
+      {/* ========== 简介 ========== */}
+      <ToneSection tone="ink" as="section" aria-labelledby="about-title" className="pt-[64px]">
+        <div className="site-wrap pb-24 pt-24 md:pb-32">
+          <SectionLabel label="ABOUT" index={sectionIndex++} />
+          <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,720px)] lg:gap-16">
+            <div>
+              <h1 id="about-title" className="text-h1 font-semibold">
+                {profile.name}
+              </h1>
+              <p className="mt-4 text-body text-fg-muted">{profile.title}</p>
             </div>
-            <div className="flex gap-4">
-              {profile.social
-                .filter((s) => s.url && s.url !== '#')
-                .map((s) => (
-                  <Magnet key={s.name} strength={0.2}>
-                    <a
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-6 py-3 border border-white/10 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 rounded-full block"
-                    >
-                      {s.name}
+            <div>
+              <p className="text-body-lg">{profile.bio}</p>
+              <dl className="mt-12 grid gap-6 border-t border-line pt-8 text-body sm:grid-cols-3">
+                <div>
+                  <dt className="text-label text-fg-muted">邮件</dt>
+                  <dd className="mt-2 break-all">
+                    <a href={`mailto:${profile.email}`} className="underline decoration-1 underline-offset-4">
+                      {profile.email}
                     </a>
-                  </Magnet>
-                ))}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-label text-fg-muted">微信</dt>
+                  <dd className="mt-2">{profile.wechat}</dd>
+                </div>
+                {profile.location && (
+                  <div>
+                    <dt className="text-label text-fg-muted">所在地</dt>
+                    <dd className="mt-2">{profile.location}</dd>
+                  </div>
+                )}
+              </dl>
             </div>
           </div>
         </div>
-      </section>
+      </ToneSection>
 
-      {/* 技术栈 - 工业网格 */}
-      <section ref={techStackRef} className="section-padding bg-white text-[var(--color-black)]">
-        <div className="container-narrow">
-          <div className="mb-20">
-            <h2 className="font-display text-4xl sm:text-6xl text-[var(--color-black)] mb-6">
-              <BlurText text="技术" delay={0.1} /> <span className="text-[var(--color-primary)]">储备</span>
-            </h2>
-            <div className="w-20 h-1 bg-[var(--color-primary)]" />
+      {/* ========== 经历 ========== */}
+      <ToneSection tone="sage" as="section" aria-labelledby="timeline-title">
+        <div className="site-wrap py-24 md:py-32">
+          <SectionLabel label="PATH" index={sectionIndex++} />
+          <h2 id="timeline-title" className="mb-12 mt-12 text-center text-h1 font-semibold md:mb-16">
+            经历
+          </h2>
+          <Timeline events={timeline} />
+        </div>
+      </ToneSection>
+
+      {/* ========== 精选仓库 ========== */}
+      {repos && repos.list.length > 0 && (
+        <ToneSection tone="ink" as="section" aria-labelledby="repos-title">
+          <div className="site-wrap pt-24 md:pt-32">
+            <SectionLabel label="WORKS" index={sectionIndex++} />
+            <div className="mb-12 mt-12 flex items-end justify-between gap-6">
+              <h2 id="repos-title" className="text-h1 font-semibold">
+                精选仓库
+              </h2>
+              {github && (
+                <a
+                  href={github.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[44px] items-center border-b border-line text-label text-fg-muted transition-colors hover:text-fg"
+                >
+                  GitHub 主页 →<span className="sr-only">(在新标签页打开)</span>
+                </a>
+              )}
+            </div>
+            <RepoList repos={repos.list} live={repos.live} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 border border-gray-100">
+        </ToneSection>
+      )}
+
+      {/* ========== 技术栈 ========== */}
+      <ToneSection tone="ink" as="section" aria-labelledby="stack-title">
+        <div className="site-wrap py-24 md:py-32">
+          <SectionLabel label="STACK" index={sectionIndex++} />
+          <h2 id="stack-title" className="mb-12 mt-12 text-h1 font-semibold">
+            技术栈
+          </h2>
+          <div className="grid gap-x-8 gap-y-10 border-t border-line pt-10 sm:grid-cols-2 lg:grid-cols-3">
             {Object.entries(techStack).map(([cat, items]) => (
-              <div
-                key={cat}
-                className="tech-category p-10 border-r border-b last:border-r-0 border-gray-100 group hover:bg-[var(--color-surface)] hover:text-white transition-all duration-500"
-              >
-                <h3 className="font-display text-xs uppercase tracking-[0.3em] text-[var(--color-primary)] mb-8">
-                  {categoryLabels[cat] ?? cat}
-                </h3>
-                <div className="space-y-4">
+              <div key={cat}>
+                <h3 className="text-label text-fg-muted">{categoryLabels[cat] ?? cat}</h3>
+                <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-body">
                   {items.map((t) => (
-                    <div
-                      key={t.name}
-                      className="flex items-center justify-between group/item"
-                    >
-                      <span className="text-lg font-light">{t.name}</span>
-                      <div className="w-12 h-px bg-gray-200 group-hover/item:w-20 group-hover/item:bg-[var(--color-primary)] transition-all duration-500" />
-                    </div>
+                    <li key={t.name}>{t.name}</li>
                   ))}
-                </div>
+                </ul>
               </div>
             ))}
           </div>
         </div>
-      </section>
-
-      {/* 成长历程 - 垂直流水线 */}
-      <section ref={timelineRef} className="section-padding bg-[var(--color-black)] text-white">
-        <div className="container-narrow">
-          <div className="mb-32 text-center">
-            <h2 className="font-display text-4xl sm:text-6xl mb-6">
-              <BlurText text="进取" delay={0.1} /> <span className="text-[var(--color-primary)]">历程</span>
-            </h2>
-            <p className="text-white/40 text-xs uppercase tracking-[0.5em]">把每一次练习都变成可复用的经验</p>
-          </div>
-          <div className="max-w-4xl mx-auto relative">
-            <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-[var(--color-primary)] via-[#af52de] to-transparent -translate-x-1/2 shadow-[0_0_12px_var(--color-primary)]" />
-            {timeline.map((e, i) => (
-              <div
-                key={e.year}
-                className={`timeline-item relative mb-24 last:mb-0 flex flex-col md:flex-row ${i % 2 === 0 ? 'md:flex-row-reverse' : ''}`}
-              >
-                <div className="md:w-1/2 flex items-center justify-center md:px-12">
-                  <div className={`w-full p-10 border border-white/5 bg-white/[0.02] backdrop-blur-sm rounded-2xl ${i % 2 === 0 ? 'text-right' : 'text-left'} hover:border-[var(--color-primary)]/40 transition-colors duration-300`}>
-                    <span className="font-display text-3xl text-[var(--color-primary)] mb-4 block">{e.year}</span>
-                    <h4 className="font-display text-xl mb-4 text-white uppercase tracking-widest">{e.title}</h4>
-                    <p className="text-white/60 font-light leading-relaxed">{e.description}</p>
-                  </div>
-                </div>
-                <div className="absolute left-0 md:left-1/2 top-1/2 -translate-y-1/2 w-4 h-4 bg-[var(--color-primary)] rounded-full -translate-x-1/2 shadow-[0_0_15px_var(--color-primary)] ring-4 ring-black" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-32 bg-white text-center">
-        <Magnet strength={0.3}>
-          <Link to="/blog" className="btn-primary group inline-flex items-center">
-            进入博客空间
-            <ArrowRight className="ml-4 w-4 h-4 group-hover:translate-x-2 transition-transform" />
-          </Link>
-        </Magnet>
-      </section>
-    </div>
+      </ToneSection>
+    </>
   )
 }
-
