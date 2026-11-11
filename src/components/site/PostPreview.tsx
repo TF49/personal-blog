@@ -14,7 +14,7 @@ export default function PostPreview({ article }: PostPreviewProps) {
   return (
     <div
       aria-hidden="true"
-      className="w-72 bg-ink text-fg rounded-img overflow-hidden pointer-events-none select-none"
+      className="w-[17rem] overflow-hidden rounded-img border border-line-sage bg-sage text-on-sage shadow-[0_18px_54px_rgb(16_18_15/0.22)] pointer-events-none select-none"
     >
       {article.cover ? (
         <img
@@ -24,12 +24,12 @@ export default function PostPreview({ article }: PostPreviewProps) {
           loading="eager"
         />
       ) : (
-        <div className="p-6 flex flex-col gap-3">
-          <span className="text-label uppercase text-fg-muted tracking-widest">
+        <div className="flex min-h-[190px] flex-col p-6">
+          <span className="text-label uppercase text-on-sage-muted tracking-widest">
             {article.category}
           </span>
-          <span className="text-label text-fg-muted">{article.date}</span>
-          <h3 className="text-h2 font-medium leading-snug">{article.title}</h3>
+          <h3 className="mt-5 text-[22px] font-medium leading-snug">{article.title}</h3>
+          <span className="mt-auto pt-5 text-label text-on-sage-muted">{article.date}</span>
         </div>
       )}
     </div>

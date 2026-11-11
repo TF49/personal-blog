@@ -14,7 +14,7 @@ interface HeroFrameProps {
 
 /**
  * 首屏外框:回退图(最底层)→ children(3D 画布)→ 文字层。
- * 横屏用横向构图,竖屏用竖向构图,与 3D 场景的取景规则一致(hero/rockScene.ts)。
+ * 横屏用横向构图,竖屏用竖向构图,与 3D 场景的取景规则一致(hero/strataScene.ts)。
  */
 export const HeroFrame = forwardRef<HTMLDivElement, HeroFrameProps>(function HeroFrame(
   { title, subtitle, children },
@@ -23,12 +23,12 @@ export const HeroFrame = forwardRef<HTMLDivElement, HeroFrameProps>(function Her
   return (
     <div ref={ref} className="hero-h relative overflow-hidden">
       <picture>
-        <source media="(orientation: landscape)" srcSet={heroLandscape} />
+        <source media="(min-width: 768px) and (orientation: landscape)" srcSet={heroLandscape} />
         <img
           src={heroPortrait}
           alt=""
           aria-hidden="true"
-          decoding="async"
+          decoding="sync"
           className="absolute inset-0 h-full w-full select-none object-cover"
         />
       </picture>

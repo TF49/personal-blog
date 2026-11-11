@@ -1,5 +1,5 @@
 /**
- * HeroScene — 首屏 Three.js 石头场景
+ * HeroScene — 首屏 Three.js 原创分层构造体
  *
  * 降级策略(满足任一则只显示静态回退图,不请求 three):
  *  1. 视口宽度 < 768px
@@ -8,7 +8,7 @@
  *  4. navigator.connection?.saveData === true
  *  5. 正在预渲染(window.__PRERENDER_INJECTED)
  *
- * 场景代码在 hero/rockScene.ts,通过动态 import() 懒加载。
+ * 场景代码在 hero/strataScene.ts,通过动态 import() 懒加载。
  * 回退图一直垫在画布下面,画布画完第一帧后再淡入,切换时不闪烁。
  */
 
@@ -62,10 +62,10 @@ export default function HeroScene({ title, subtitle }: HeroSceneProps) {
 
     let dispose: (() => void) | undefined
     let cancelled = false
-    import('./hero/rockScene')
-      .then(({ createRockScene }) => {
+    import('./hero/strataScene')
+      .then(({ createStrataScene }) => {
         if (cancelled) return
-        dispose = createRockScene({ canvas, container, onFirstFrame: () => setReady(true) })
+        dispose = createStrataScene({ canvas, container, onFirstFrame: () => setReady(true) })
       })
       .catch(() => {
         // 分块加载失败时保留回退图

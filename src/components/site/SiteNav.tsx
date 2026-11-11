@@ -1,5 +1,6 @@
 import { forwardRef } from 'react'
 import { NavLink } from 'react-router-dom'
+import RollText from './RollText'
 
 export const navItems = [
   { to: '/', label: '首页', end: true },
@@ -17,8 +18,8 @@ const linkBase =
   'inline-flex min-h-[44px] items-center underline decoration-1 decoration-transparent transition-[text-decoration-color,opacity] duration-200 hover:decoration-current [&.active]:decoration-current'
 
 const variantClass = {
-  // 桌面导航:13px;左右内边距撑出 44px 触控宽度
-  bar: `${linkBase} min-w-[44px] justify-center px-3 text-label underline-offset-[6px]`,
+  // 桌面导航:13px;左右内边距撑出 44px 触控宽度。悬停时文字翻牌,当前页用底部细线标记
+  bar: 'group relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-3 text-label uppercase after:absolute after:inset-x-3 after:bottom-2.5 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 [&.active]:after:scale-x-100',
   // 手机全屏菜单:28px
   menu: `${linkBase} text-[28px] leading-[1.2] font-medium underline-offset-[8px]`,
 }
@@ -37,7 +38,7 @@ const SiteNav = forwardRef<HTMLAnchorElement, SiteNavProps>(function SiteNav({ v
               onClick={onNavigate}
               className={variantClass[variant]}
             >
-              {label}
+              {variant === 'bar' ? <RollText text={label} /> : label}
             </NavLink>
           </li>
         ))}

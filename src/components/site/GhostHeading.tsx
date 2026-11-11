@@ -8,6 +8,8 @@ gsap.registerPlugin(ScrollTrigger)
 interface GhostHeadingProps {
   /** 多行标题，每个字符串是一行 */
   lines: string[]
+  /** 每行的左缩进(CSS 长度,如 '42%'),用于错落排布;缺省为 0 */
+  indents?: string[]
   className?: string
 }
 
@@ -18,7 +20,7 @@ interface GhostHeadingProps {
  * - ScrollTrigger scrub 横向位移（每行方向交错）
  * - reduced-motion 下静态显示
  */
-export default function GhostHeading({ lines, className = '' }: GhostHeadingProps) {
+export default function GhostHeading({ lines, indents, className = '' }: GhostHeadingProps) {
   const reduced = useReducedMotion()
   const containerRef = useRef<HTMLDivElement>(null)
   const lineRefs = useRef<HTMLSpanElement[]>([])
@@ -66,8 +68,8 @@ export default function GhostHeading({ lines, className = '' }: GhostHeadingProp
           ref={(el) => {
             if (el) lineRefs.current[i] = el
           }}
-          className="block text-display font-semibold leading-none whitespace-nowrap"
-          style={{ color: 'var(--ghost)' }}
+          className="block w-max text-display font-semibold uppercase leading-[0.86] tracking-[-0.045em] whitespace-nowrap"
+          style={{ color: 'var(--ghost)', marginLeft: indents?.[i] ?? 0 }}
         >
           {line}
         </span>

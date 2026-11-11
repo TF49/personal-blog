@@ -13,7 +13,34 @@ interface PostIndexProps {
 /** 检测当前设备是否支持指针悬停(排除触屏设备) */
 function canHover(): boolean {
   if (typeof window === 'undefined') return false
-  return window.matchMedia('(hover: hover)').matches
+  return window.innerWidth >= 1024 && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+}
+
+type PreviewPosition = { x: number; y: number }
+
+const PREVIEW_WIDTH = 272
+const PREVIEW_HEIGHT = 220
+const PREVIEW_MARGIN = 20
+
+function positionPreview(row: HTMLElement): PreviewPosition {
+  const rect = row.getBoundingClientRect()
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  const placeRight = rect.left + rect.width / 2 <= viewportWidth / 2
+  const desiredX = placeRight
+    ? rect.right + 18
+    : rect.left - PREVIEW_WIDTH - 18
+  const x = Math.min(
+    Math.max(PREVIEW_MARGIN, desiredX),
+    viewportWidth - PREVIEW_WIDTH - PREVIEW_MARGIN,
+  )
+
+  const below = rect.bottom + 16
+  const y = below + PREVIEW_HEIGHT <= viewportHeight - PREVIEW_MARGIN
+    ? below
+    : Math.max(PREVIEW_MARGIN, rect.top - PREVIEW_HEIGHT - 16)
+
+  return { x, y }
 }
 
 /**
@@ -25,17 +52,13 @@ function canHover(): boolean {
 export default function PostIndex({ articles }: PostIndexProps) {
   const reduced = useReducedMotion()
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
+  const [previewPos, setPreviewPos] = useState<PreviewPosition>({ x: PREVIEW_MARGIN, y: PREVIEW_MARGIN })
   const containerRef = useRef<HTMLDivElement>(null)
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    setCursorPos({ x: e.clientX, y: e.clientY })
-  }, [])
 
   const handleMouseEnter = useCallback((id: string, e: React.MouseEvent) => {
     if (!canHover()) return
     setHoveredId(id)
-    setCursorPos({ x: e.clientX, y: e.clientY })
+    setPreviewPos(positionPreview(e.currentTarget as HTMLElement))
   }, [])
 
   const handleMouseLeave = useCallback(() => {
@@ -43,9 +66,10 @@ export default function PostIndex({ articles }: PostIndexProps) {
   }, [])
 
   // 键盘聚焦:只在 hover 能力的设备上才弹出浮动预览
-  const handleFocus = useCallback((id: string) => {
+  const handleFocus = useCallback((id: string, e: React.FocusEvent) => {
     if (!canHover()) return
     setHoveredId(id)
+    setPreviewPos(positionPreview(e.currentTarget as HTMLElement))
   }, [])
 
   const handleBlur = useCallback(() => {
@@ -59,16 +83,6 @@ export default function PostIndex({ articles }: PostIndexProps) {
 
   const hoveredArticle = hoveredId ? articles.find((a) => a.id === hoveredId) : null
   const showPreview = !reduced && canHover() && hoveredArticle != null
-
-  // 预览卡位置:跟随光标偏移 20px,右侧夹紧视口(w-72 = 288px)
-  const previewW = 288
-  const margin = 24
-  const rawX = cursorPos.x + 20
-  const clampedX = Math.min(
-    rawX,
-    (typeof window !== 'undefined' ? window.innerWidth : 1440) - previewW - margin,
-  )
-  const clampedY = Math.max(8, cursorPos.y - 60)
 
   return (
     <div ref={containerRef} className="relative">
@@ -84,14 +98,14 @@ export default function PostIndex({ articles }: PostIndexProps) {
               key={article.id}
               to={`/blog/${encodeURIComponent(article.slug)}`}
               className={[
-                'group flex items-center gap-6 py-6 px-0 border-t border-line',
+                'group grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 border-t border-line px-0 py-6',
+                'sm:flex sm:items-center sm:gap-6',
                 'transition-opacity duration-200',
                 isDimmed ? 'opacity-40' : 'opacity-100',
               ].join(' ')}
               onMouseEnter={(e) => handleMouseEnter(article.id, e)}
               onMouseLeave={handleMouseLeave}
-              onMouseMove={handleMouseMove}
-              onFocus={() => handleFocus(article.id)}
+              onFocus={(e) => handleFocus(article.id, e)}
               onBlur={handleBlur}
             >
               {/* Left: number + category */}
@@ -102,16 +116,20 @@ export default function PostIndex({ articles }: PostIndexProps) {
 
               {/* Center: title + summary */}
               <div className="flex-1 min-w-0">
-                <h2 className="text-h2 font-medium leading-snug line-clamp-2 group-hover:text-fg transition-colors">
+                <h2 className="text-h2 font-medium leading-snug group-hover:text-fg transition-colors sm:line-clamp-2">
                   {article.title}
                 </h2>
+                <div className="mt-3 flex items-center justify-between gap-4 text-label text-fg-muted sm:hidden">
+                  <span>{article.date}</span>
+                  <ArrowUpRightIcon {...ICON_SM} aria-hidden />
+                </div>
                 {article.summary && (
-                  <p className="text-body text-fg-muted mt-1 line-clamp-1">{article.summary}</p>
+                  <p className="mt-2 line-clamp-2 text-body text-fg-muted sm:mt-1 sm:line-clamp-1">{article.summary}</p>
                 )}
               </div>
 
               {/* Right: date + arrow */}
-              <div className="flex flex-col items-end gap-1 shrink-0 ml-4">
+              <div className="ml-4 hidden shrink-0 flex-col items-end gap-1 sm:flex">
                 <span className="text-label text-fg-muted whitespace-nowrap">{article.date}</span>
                 <ArrowUpRightIcon
                   {...ICON_SM}
@@ -127,7 +145,7 @@ export default function PostIndex({ articles }: PostIndexProps) {
       {showPreview && hoveredArticle && (
         <div
           className="fixed z-50 pointer-events-none"
-          style={{ left: clampedX, top: clampedY }}
+          style={{ left: previewPos.x, top: previewPos.y }}
         >
           <PostPreview article={hoveredArticle} />
         </div>

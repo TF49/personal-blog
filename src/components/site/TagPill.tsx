@@ -16,7 +16,7 @@ export default function TagPill({ label, active = false, onClick }: TagPillProps
         type="button"
         onClick={onClick}
         className={[
-          'text-label px-4 py-1.5 rounded-pill border transition-colors',
+          'inline-flex min-h-11 items-center text-label px-4 py-1.5 rounded-pill border transition-colors',
           active
             ? 'bg-fg text-surface border-fg'
             : 'border-line text-fg-muted hover:border-fg hover:text-fg',

@@ -8,6 +8,7 @@ import ToneSection from '@/components/site/ToneSection'
 import SectionLabel from '@/components/site/SectionLabel'
 import Timeline from '@/components/site/Timeline'
 import RepoList from '@/components/site/RepoList'
+import ProfileMark from '@/components/site/ProfileMark'
 
 type RepoState = { list: GitHubRepo[]; live: boolean }
 
@@ -71,6 +72,7 @@ export default function About() {
                 {profile.name}
               </h1>
               <p className="mt-4 text-body text-fg-muted">{profile.title}</p>
+              <ProfileMark className="mt-10 w-36 opacity-70 md:mt-14 md:w-52" />
             </div>
             <div>
               <p className="text-body-lg">{profile.bio}</p>

@@ -13,23 +13,36 @@ interface HeroCopyProps {
  * - data-hero-copy 供截图脚本在生成回退图时隐藏文字
  */
 export default function HeroCopy({ title, subtitle }: HeroCopyProps) {
+  const [primary, ...secondary] = title.split('·').map((part) => part.trim())
+
   return (
     <div
       data-hero-copy
       className="pointer-events-none absolute inset-0 flex flex-col justify-between"
-      style={{ paddingTop: 'calc(var(--header-h) + 16px)' }}
+      style={{ paddingTop: 'calc(var(--header-h) + 20px)' }}
     >
       <SectionLabel label="HOME" index={1} className="site-wrap" />
 
-      <div className="site-wrap pb-16 md:pb-20">
-        <div className="ml-auto flex flex-col items-end text-right md:max-w-[min(30rem,40vw)]">
-          {/* 幽灵字:颜色随分区切换,在绿底上是略深一级的绿 */}
-          <span aria-hidden="true" className="select-none text-display font-semibold leading-none text-ghost">
+      <div className="site-wrap pb-10 md:pb-[clamp(64px,9vh,96px)]">
+        <div className="relative ml-auto flex max-w-[21rem] flex-col items-start text-left md:max-w-[min(35rem,43vw)] md:items-end md:text-right">
+          <span
+            aria-hidden="true"
+            className="absolute -top-[0.72em] right-0 select-none text-[clamp(88px,14vw,184px)] font-semibold leading-none text-ghost"
+          >
             TF49
           </span>
-          <h1 className="mt-2 text-h1 font-semibold">{title}</h1>
-          <p className="mt-3 text-body text-fg-muted">{subtitle}</p>
-          <div aria-hidden="true" className="mt-8 h-px w-24 bg-line" />
+          <h1 aria-label={title} className="relative z-10">
+            <span aria-hidden="true" className="block text-[clamp(42px,4.65vw,67px)] font-semibold leading-[1.02]">
+              {primary}
+            </span>
+            <span aria-hidden="true" className="mt-3 block text-[clamp(21px,2.2vw,31px)] font-medium leading-[1.2]">
+              {secondary.join(' · ')}
+            </span>
+          </h1>
+          <div className="relative z-10 mt-5 flex items-center gap-4 md:justify-end">
+            <span aria-hidden="true" className="h-px w-10 bg-line md:w-14" />
+            <p className="text-label text-fg-muted">{subtitle}</p>
+          </div>
         </div>
       </div>
     </div>
