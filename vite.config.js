@@ -19,6 +19,21 @@ var require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 var vitePrerender = require('vite-plugin-prerender');
 var enablePrerender = process.env.ENABLE_PRERENDER === 'true';
+/** 读取实际安装的依赖版本(而非 package.json 中的范围),供首页 COLOPHON 展示 */
+function installedVersion(name) {
+    var _a;
+    try {
+        var raw = fs.readFileSync(path.join(__dirname, 'node_modules', name, 'package.json'), 'utf8');
+        return (_a = JSON.parse(raw).version) !== null && _a !== void 0 ? _a : 'unknown';
+    }
+    catch (_b) {
+        return 'unknown';
+    }
+}
+var buildInfo = {
+    builtAt: new Date().toISOString(),
+    deps: Object.fromEntries(['react', 'three', 'gsap', 'tailwindcss', 'vite', 'typescript'].map(function (name) { return [name, installedVersion(name)]; })),
+};
 var prerenderPlugin = vitePrerender({
     staticDir: path.join(__dirname, 'dist'),
     routes: (function () {
@@ -57,6 +72,9 @@ var prerenderPlugin = vitePrerender({
     },
 });
 export default defineConfig({
+    define: {
+        __BUILD_INFO__: JSON.stringify(buildInfo),
+    },
     plugins: __spreadArray([
         react()
     ], (enablePrerender ? [prerenderPlugin] : []), true),

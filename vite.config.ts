@@ -12,6 +12,23 @@ const require = createRequire(import.meta.url)
 const vitePrerender = require('vite-plugin-prerender')
 const enablePrerender = process.env.ENABLE_PRERENDER === 'true'
 
+/** 读取实际安装的依赖版本(而非 package.json 中的范围),供首页 COLOPHON 展示 */
+function installedVersion(name: string): string {
+  try {
+    const raw = fs.readFileSync(path.join(__dirname, 'node_modules', name, 'package.json'), 'utf8')
+    return (JSON.parse(raw) as { version?: string }).version ?? 'unknown'
+  } catch {
+    return 'unknown'
+  }
+}
+
+const buildInfo = {
+  builtAt: new Date().toISOString(),
+  deps: Object.fromEntries(
+    ['react', 'three', 'gsap', 'tailwindcss', 'vite', 'typescript'].map((name) => [name, installedVersion(name)]),
+  ),
+}
+
 const prerenderPlugin = vitePrerender({
   staticDir: path.join(__dirname, 'dist'),
   routes: (() => {
@@ -50,6 +67,9 @@ const prerenderPlugin = vitePrerender({
 })
 
 export default defineConfig({
+  define: {
+    __BUILD_INFO__: JSON.stringify(buildInfo),
+  },
   plugins: [
     react(),
     ...(enablePrerender ? [prerenderPlugin] : []),

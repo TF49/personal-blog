@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import type { TechItem } from '@/types'
 import SectionLabel from '../SectionLabel'
 
@@ -39,13 +40,16 @@ export default function StackCloud({ groups, labels, index }: StackCloudProps) {
           >
             <span className="sr-only">{labels[key] ?? key}:</span>
             <span className="text-[clamp(16px,1.55vw,22px)] font-medium uppercase leading-[1.6] tracking-[0.01em]">
+              {/* 空格放在 nowrap 之外,作为词间的换行点;否则整行无法折行,窄屏会横向溢出 */}
               {items.map((item) => (
-                <span key={item.name} className="whitespace-nowrap">
-                  <span aria-hidden="true" className="mx-[0.5em] text-line">
-                    /
-                  </span>
-                  {item.name}{' '}
-                </span>
+                <Fragment key={item.name}>
+                  <span className="whitespace-nowrap">
+                    <span aria-hidden="true" className="mx-[0.5em] text-line">
+                      /
+                    </span>
+                    {item.name}
+                  </span>{' '}
+                </Fragment>
               ))}
             </span>
           </li>

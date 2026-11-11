@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
-import { getArticles } from '@/api'
-import type { Article } from '@/types'
+import { getArticles, getPinnedRepos } from '@/api'
+import type { Article, GitHubRepo } from '@/types'
 import SEO from '@/components/SEO'
 import ToneSection from '@/components/site/ToneSection'
 import SectionLabel from '@/components/site/SectionLabel'
@@ -18,8 +18,11 @@ import RecordSection, { type RecordItem } from '@/components/site/home/RecordSec
 import ProjectScatter from '@/components/site/home/ProjectScatter'
 import StackCloud from '@/components/site/home/StackCloud'
 import ContactComposer from '@/components/site/home/ContactComposer'
+import PathStrip from '@/components/site/home/PathStrip'
+import Colophon from '@/components/site/home/Colophon'
+import QandA from '@/components/site/home/QandA'
 import { profile } from '@/data/profile'
-import { fallbackRepos } from '@/data/featuredRepos'
+import { fallbackRepos, featuredRepoFullNames } from '@/data/featuredRepos'
 import { categoryLabels, techStackByCategory } from '@/data/techStack'
 import { timelineEvents } from '@/data/timeline'
 
@@ -27,7 +30,20 @@ import { timelineEvents } from '@/data/timeline'
 const HeroScene = lazy(() => import('@/components/site/HeroScene'))
 
 /** 首页分区编号,与 SectionLabel 的 [ N.00x ] 一致 */
-const N = { home: 1, about: 2, record: 3, writing: 4, projects: 5, stack: 6, contact: 7 } as const
+const N = {
+  home: 1,
+  about: 2,
+  record: 3,
+  path: 4,
+  writing: 5,
+  projects: 6,
+  stack: 7,
+  colophon: 8,
+  qa: 9,
+  contact: 10,
+} as const
+const CONTACT_ID = 'contact'
+const SOURCE_REPO_URL = 'https://github.com/TF49/personal-blog'
 const RECENT_LIMIT = 6
 
 const focusAreas = [
@@ -58,6 +74,8 @@ const repoLanguages = Array.from(new Set(fallbackRepos.map((r) => r.language).fi
 export default function Home() {
   const [introDone, setIntroDone] = useState(false)
   const [articles, setArticles] = useState<Article[]>([])
+  // 先用本地精选仓库渲染(无布局跳动),GitHub API 返回后替换为实时数据
+  const [repos, setRepos] = useState<{ list: GitHubRepo[]; live: boolean }>({ list: fallbackRepos, live: false })
 
   useEffect(() => {
     getArticles()
@@ -66,6 +84,19 @@ export default function Home() {
       .finally(() => {
         document.dispatchEvent(new Event('prerender-ready'))
       })
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    getPinnedRepos(featuredRepoFullNames)
+      .then(({ repos: list }) => {
+        if (cancelled || list.length === 0) return
+        setRepos({ list, live: list.some((r) => !fallbackRepos.includes(r)) })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const recent = articles.slice(0, RECENT_LIMIT)
@@ -176,7 +207,12 @@ export default function Home() {
         <RecordSection headline={techCount} items={records} index={N.record} />
       </ToneSection>
 
-      {/* ========== N.004 最新文章 ========== */}
+      {/* ========== N.004 历程 ========== */}
+      <ToneSection tone="sage" as="section" aria-labelledby="path-heading" className="border-t border-line-sage">
+        <PathStrip events={timelineEvents} index={N.path} />
+      </ToneSection>
+
+      {/* ========== N.005 最新文章 ========== */}
       <ToneSection tone="ink" as="section" aria-labelledby="posts-heading">
         <div className="site-wrap py-24 md:py-32">
           <SectionLabel label="WRITING" index={N.writing} className="mb-8" />
@@ -216,18 +252,34 @@ export default function Home() {
         </div>
       </ToneSection>
 
-      {/* ========== N.005 项目 ========== */}
+      {/* ========== N.006 项目 ========== */}
       <ToneSection tone="ink" as="section" aria-labelledby="projects-heading" className="border-t border-line-ink">
-        <ProjectScatter repos={fallbackRepos} index={N.projects} />
+        <ProjectScatter repos={repos.list} live={repos.live} index={N.projects} />
       </ToneSection>
 
-      {/* ========== N.006 技术栈 ========== */}
+      {/* ========== N.007 技术栈 ========== */}
       <ToneSection tone="ink" as="section" aria-labelledby="stack-heading">
         <StackCloud groups={techStackByCategory} labels={categoryLabels} index={N.stack} />
       </ToneSection>
 
-      {/* ========== N.007 写信 ========== */}
-      <ToneSection tone="sage" as="section" aria-labelledby="contact-heading" className="border-b border-line-sage">
+      {/* ========== N.008 本站构建 ========== */}
+      <ToneSection tone="sage" as="section" aria-labelledby="colophon-heading">
+        <Colophon index={N.colophon} repoUrl={SOURCE_REPO_URL} />
+      </ToneSection>
+
+      {/* ========== N.009 问答 ========== */}
+      <ToneSection tone="ink" as="section" aria-labelledby="qa-heading">
+        <QandA index={N.qa} email={profile.email} contactId={CONTACT_ID} />
+      </ToneSection>
+
+      {/* ========== N.010 写信 ========== */}
+      <ToneSection
+        id={CONTACT_ID}
+        tone="sage"
+        as="section"
+        aria-labelledby="contact-heading"
+        className="scroll-mt-[var(--header-h)] border-b border-line-sage"
+      >
         <ContactComposer email={profile.email} index={N.contact} />
       </ToneSection>
     </>

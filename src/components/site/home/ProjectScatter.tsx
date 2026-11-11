@@ -6,7 +6,22 @@ import { ICON_SM } from '../icon'
 
 interface ProjectScatterProps {
   repos: GitHubRepo[]
+  /** true:数据来自 GitHub API(含本地缓存);false:本地精选兜底数据 */
+  live: boolean
   index: number
+}
+
+const relativeFormat = new Intl.RelativeTimeFormat('zh-CN', { numeric: 'auto' })
+
+/** 把 ISO 时间格式化为"3 天前 / 2 个月前",无效时间返回 null */
+function formatRelative(iso: string | undefined): string | null {
+  if (!iso) return null
+  const time = new Date(iso).getTime()
+  if (Number.isNaN(time)) return null
+  const days = Math.round((time - Date.now()) / 86_400_000)
+  if (Math.abs(days) < 31) return relativeFormat.format(days, 'day')
+  if (Math.abs(days) < 365) return relativeFormat.format(Math.round(days / 30), 'month')
+  return relativeFormat.format(Math.round(days / 365), 'year')
 }
 
 /** 桌面端项目名的散布落点(相对分区),左右交错、上下错开 */
@@ -22,12 +37,14 @@ const SPOTS = [
 /**
  * 项目段(ink)。桌面端项目名散布在整屏,悬停/聚焦时其余项目变暗,
  * 中央面板显示该仓库的语言、说明和主题;手机端退化为单列文字索引。
- * 数据使用本地精选仓库,不显示可能过期的星标数。
+ * 优先使用 GitHub API 的实时数据(最近推送时间),失败时回退到本地精选仓库;
+ * 本地数据的时间是手写的,不展示。任何情况下都不显示星标数。
  */
-export default function ProjectScatter({ repos, index }: ProjectScatterProps) {
+export default function ProjectScatter({ repos, live, index }: ProjectScatterProps) {
   const [activeId, setActiveId] = useState<number | null>(null)
   const list = repos.slice(0, SPOTS.length)
   const active = list.find((r) => r.id === activeId) ?? null
+  const pushedAgo = (repo: GitHubRepo) => (live ? formatRelative(repo.pushed_at) : null)
 
   return (
     <div className="site-wrap relative py-24 md:flex md:min-h-[100svh] md:flex-col md:py-16">
@@ -54,7 +71,10 @@ export default function ProjectScatter({ repos, index }: ProjectScatterProps) {
         >
           {active ? (
             <div key={active.id} className="menu-enter">
-              <p className="text-label uppercase text-fg-muted">{active.language ?? 'Repository'}</p>
+              <p className="text-label uppercase text-fg-muted">
+                {active.language ?? 'Repository'}
+                {pushedAgo(active) && <span className="normal-case">{` · 最近推送 ${pushedAgo(active)}`}</span>}
+              </p>
               <p className="mt-4 text-h2 font-semibold">{active.name}</p>
               {active.description && <p className="mt-4 text-body text-fg-muted">{active.description}</p>}
               {active.topics && active.topics.length > 0 && (
@@ -101,6 +121,9 @@ export default function ProjectScatter({ repos, index }: ProjectScatterProps) {
                     />
                   </span>
                   {repo.description && <span className="text-body text-fg-muted md:sr-only">{repo.description}</span>}
+                  {pushedAgo(repo) && (
+                    <span className="text-label text-fg-muted md:sr-only">{`最近推送 ${pushedAgo(repo)}`}</span>
+                  )}
                   <span className="sr-only">(在新标签页打开)</span>
                 </a>
               </li>
@@ -109,7 +132,14 @@ export default function ProjectScatter({ repos, index }: ProjectScatterProps) {
         </ol>
       </div>
 
-      <div className="relative mt-10 flex justify-start md:mt-0 md:justify-end">
+      <div className="relative mt-10 flex flex-wrap items-center justify-between gap-4 md:mt-0">
+        <p className="flex items-center gap-2 text-label uppercase text-fg-muted">
+          <span
+            aria-hidden="true"
+            className={`inline-block h-1.5 w-1.5 rounded-full ${live ? 'bg-current motion-safe:animate-pulse' : 'border border-current'}`}
+          />
+          {live ? 'Live · GitHub API' : 'Local · 本地精选数据'}
+        </p>
         <Link
           to="/about"
           className="inline-flex min-h-11 items-center border-b border-line text-label text-fg-muted transition-colors hover:text-fg"
